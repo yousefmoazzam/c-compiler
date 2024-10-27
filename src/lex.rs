@@ -9,6 +9,7 @@ pub enum Token {
     OpenParenthesis,
     CloseParenthesis,
     OpenBrace,
+    CloseBrace,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -18,6 +19,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let open_parenthesis_regex = Regex::new(r"^\(").unwrap();
     let close_parenthesis_regex = Regex::new(r"^\)").unwrap();
     let open_brace_regex = Regex::new(r"^\{").unwrap();
+    let close_brace_regex = Regex::new(r"^\}").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -90,6 +92,17 @@ pub fn lex(text: &str) -> Vec<Token> {
                 continue;
             }
 
+            let res = close_brace_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::CloseBrace;
+                tokens.push(token);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
             // No match was found, so the string contains either:
             // - valid C code, but not yet supported
             // - invalid C code
@@ -152,6 +165,14 @@ mod tests {
     fn open_brace_token_is_created() {
         let source_code_string = "int main() {";
         let expected_last_token = Token::OpenBrace;
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn close_brace_token_is_created() {
+        let source_code_string = "int main() {}";
+        let expected_last_token = Token::CloseBrace;
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
     }
