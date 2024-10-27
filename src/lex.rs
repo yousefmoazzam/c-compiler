@@ -5,10 +5,13 @@ static INT_KEYWORD_LEN: usize = 3;
 #[derive(Debug, PartialEq)]
 pub enum Token {
     IntKeyword,
+    Identifier(String),
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
     let int_keyword_regex = Regex::new(r"^int\b").unwrap();
+    let identifier_regex = Regex::new(r"^[a-zA-Z]\w*\b").unwrap();
+    let whitespace_regex = Regex::new(r"^\s+").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -17,17 +20,33 @@ pub fn lex(text: &str) -> Vec<Token> {
         let mut idx = 0;
 
         while !traversed_entire_line {
-            let Some(_) = int_keyword_regex.find(&line[idx..]) else {
-                // Handle if no match is found
-                todo!();
-            };
-            let token = Token::IntKeyword;
-            tokens.push(token);
+            let res = whitespace_regex.find(&line[idx..]);
+            if let Some(mat) = res {
+                // Advance past the whitespace
+                idx += mat.end();
+                continue;
+            }
 
-            // Advance past the substring that a match was found for the `int` keyword
-            idx += INT_KEYWORD_LEN;
-            if idx == line.len() {
-                traversed_entire_line = true;
+            let res = int_keyword_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::IntKeyword;
+                tokens.push(token);
+
+                // Advance past the substring that a match was found for the `int` keyword
+                idx += INT_KEYWORD_LEN;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+            }
+
+            let res = identifier_regex.find(&line[idx..]);
+            if let Some(mat) = res {
+                let token = Token::Identifier(mat.as_str().to_string());
+                tokens.push(token);
+                idx += mat.end();
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
             }
         }
     }
@@ -43,6 +62,14 @@ mod tests {
     fn create_int_keyword_token_when_found_at_start_of_string() {
         let source_code_string = "int";
         let expected_tokens = vec![Token::IntKeyword];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn create_int_keyword_and_main_identifier_tokens() {
+        let source_code_string = "int main";
+        let expected_tokens = vec![Token::IntKeyword, Token::Identifier("main".to_string())];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
     }
