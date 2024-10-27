@@ -8,6 +8,7 @@ pub enum Token {
     Identifier(String),
     OpenParenthesis,
     CloseParenthesis,
+    OpenBrace,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -16,6 +17,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let whitespace_regex = Regex::new(r"^\s+").unwrap();
     let open_parenthesis_regex = Regex::new(r"^\(").unwrap();
     let close_parenthesis_regex = Regex::new(r"^\)").unwrap();
+    let open_brace_regex = Regex::new(r"^\{").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -69,6 +71,17 @@ pub fn lex(text: &str) -> Vec<Token> {
             let res = close_parenthesis_regex.find(&line[idx..]);
             if let Some(_) = res {
                 let token = Token::CloseParenthesis;
+                tokens.push(token);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            let res = open_brace_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::OpenBrace;
                 tokens.push(token);
                 idx += 1;
                 if idx == line.len() {
@@ -131,6 +144,14 @@ mod tests {
     fn close_parenthesis_token_is_created() {
         let source_code_string = "int main()";
         let expected_last_token = Token::CloseParenthesis;
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn open_brace_token_is_created() {
+        let source_code_string = "int main() {";
+        let expected_last_token = Token::OpenBrace;
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
     }
