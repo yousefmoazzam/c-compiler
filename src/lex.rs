@@ -13,6 +13,7 @@ pub enum Token {
     CloseBrace,
     ReturnKeyword,
     NumericConstant(u8),
+    Semicolon,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -25,6 +26,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let close_brace_regex = Regex::new(r"^\}").unwrap();
     let return_keyword_regex = Regex::new(r"^return\b").unwrap();
     let numeric_constant_regex = Regex::new(r"^[0-9]+\b").unwrap();
+    let semicolon_regex = Regex::new(r"^;").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -134,6 +136,17 @@ pub fn lex(text: &str) -> Vec<Token> {
                 continue;
             }
 
+            let res = semicolon_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::Semicolon;
+                tokens.push(token);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
             // No match was found, so the string contains either:
             // - valid C code, but not yet supported
             // - invalid C code
@@ -220,6 +233,14 @@ mod tests {
     fn numeric_constant_token_is_created_with_correct_value() {
         let source_code_string = "int main() {return 2";
         let expected_last_token = Token::NumericConstant(2);
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn semicolon_token_is_created() {
+        let source_code_string = "int main() {return 2;";
+        let expected_last_token = Token::Semicolon;
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
     }
