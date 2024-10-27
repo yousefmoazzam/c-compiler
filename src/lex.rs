@@ -1,6 +1,7 @@
 use regex::Regex;
 
 static INT_KEYWORD_LEN: usize = 3;
+static RETURN_KEYWORD_LEN: usize = 6;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -10,6 +11,7 @@ pub enum Token {
     CloseParenthesis,
     OpenBrace,
     CloseBrace,
+    ReturnKeyword,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -20,6 +22,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let close_parenthesis_regex = Regex::new(r"^\)").unwrap();
     let open_brace_regex = Regex::new(r"^\{").unwrap();
     let close_brace_regex = Regex::new(r"^\}").unwrap();
+    let return_keyword_regex = Regex::new(r"^return\b").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -42,6 +45,17 @@ pub fn lex(text: &str) -> Vec<Token> {
 
                 // Advance past the substring that a match was found for the `int` keyword
                 idx += INT_KEYWORD_LEN;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            let res = return_keyword_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::ReturnKeyword;
+                tokens.push(token);
+                idx += RETURN_KEYWORD_LEN;
                 if idx == line.len() {
                     traversed_entire_line = true;
                 }
@@ -173,6 +187,14 @@ mod tests {
     fn close_brace_token_is_created() {
         let source_code_string = "int main() {}";
         let expected_last_token = Token::CloseBrace;
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn return_keyword_token_is_created() {
+        let source_code_string = "int main() {return";
+        let expected_last_token = Token::ReturnKeyword;
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
     }
