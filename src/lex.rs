@@ -12,6 +12,7 @@ pub enum Token {
     OpenBrace,
     CloseBrace,
     ReturnKeyword,
+    NumericConstant(u8),
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -23,6 +24,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let open_brace_regex = Regex::new(r"^\{").unwrap();
     let close_brace_regex = Regex::new(r"^\}").unwrap();
     let return_keyword_regex = Regex::new(r"^return\b").unwrap();
+    let numeric_constant_regex = Regex::new(r"^[0-9]+\b").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -117,6 +119,21 @@ pub fn lex(text: &str) -> Vec<Token> {
                 continue;
             }
 
+            let res = numeric_constant_regex.find(&line[idx..]);
+            if let Some(mat) = res {
+                let value = mat
+                    .as_str()
+                    .parse::<u8>()
+                    .expect("Match from regex should remove all whitespace");
+                let token = Token::NumericConstant(value);
+                tokens.push(token);
+                idx += mat.end();
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
             // No match was found, so the string contains either:
             // - valid C code, but not yet supported
             // - invalid C code
@@ -195,6 +212,14 @@ mod tests {
     fn return_keyword_token_is_created() {
         let source_code_string = "int main() {return";
         let expected_last_token = Token::ReturnKeyword;
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn numeric_constant_token_is_created_with_correct_value() {
+        let source_code_string = "int main() {return 2";
+        let expected_last_token = Token::NumericConstant(2);
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
     }
