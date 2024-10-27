@@ -27,6 +27,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let return_keyword_regex = Regex::new(r"^return\b").unwrap();
     let numeric_constant_regex = Regex::new(r"^[0-9]+\b").unwrap();
     let semicolon_regex = Regex::new(r"^;").unwrap();
+    let empty_line_regex = Regex::new(r"^$").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -39,6 +40,15 @@ pub fn lex(text: &str) -> Vec<Token> {
             if let Some(mat) = res {
                 // Advance past the whitespace
                 idx += mat.end();
+                continue;
+            }
+
+            let res = empty_line_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                // The removal of a newline character by the str.lines()` method means that a line
+                // with only a newline character will have an empty string. In such a case, move to
+                // the next line.
+                traversed_entire_line = true;
                 continue;
             }
 
@@ -243,5 +253,28 @@ mod tests {
         let expected_last_token = Token::Semicolon;
         let tokens = lex(source_code_string);
         assert_eq!(tokens[tokens.len() - 1], expected_last_token);
+    }
+
+    #[test]
+    fn get_correct_tokens_despite_newline_characters() {
+        let source_code_string = "
+int main() {
+    return 2;
+
+}
+";
+        let expected_tokens = vec![
+            Token::IntKeyword,
+            Token::Identifier("main".to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::NumericConstant(2),
+            Token::Semicolon,
+            Token::CloseBrace,
+        ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
     }
 }
