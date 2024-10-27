@@ -37,6 +37,7 @@ pub fn lex(text: &str) -> Vec<Token> {
                 if idx == line.len() {
                     traversed_entire_line = true;
                 }
+                continue;
             }
 
             let res = identifier_regex.find(&line[idx..]);
@@ -47,6 +48,7 @@ pub fn lex(text: &str) -> Vec<Token> {
                 if idx == line.len() {
                     traversed_entire_line = true;
                 }
+                continue;
             }
         }
     }
