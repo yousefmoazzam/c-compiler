@@ -205,11 +205,31 @@ pub mod asm {
     #[derive(Debug, PartialEq)]
     pub enum Operand {
         Imm(u8),
+        // NOTE: Only need to use a single register (`EAX`) as an instruction operand so far, so
+        // there's no need to be able to specify which register is being used. Thus, for now,
+        // always assume this variant to mean the `EAX` register.
+        Register,
+    }
+
+    #[derive(Debug, PartialEq)]
+    pub enum Instruction {
+        Mov { src: Operand, dst: Operand },
+        Ret,
     }
 
     pub fn parse_operand(node: crate::parse::Expression) -> Operand {
         match node {
             crate::parse::Expression::NumericConstant(val) => Operand::Imm(val),
+        }
+    }
+
+    pub fn parse_instructions(node: crate::parse::Statement) -> Vec<Instruction> {
+        match node {
+            crate::parse::Statement::Return(exp) => {
+                let src = parse_operand(exp);
+                let dst = Operand::Register;
+                vec![Instruction::Mov { src: src, dst: dst }]
+            }
         }
     }
 
@@ -225,6 +245,22 @@ pub mod asm {
             let expected_asm_ast_node = Operand::Imm(value);
             let asm_ast_node = parse_operand(c_ast_node);
             assert_eq!(asm_ast_node, expected_asm_ast_node);
+        }
+
+        #[test]
+        fn parse_c_return_to_asm_instructions() {
+            let value = 2;
+            let c_constant_ast_node = crate::parse::Expression::NumericConstant(value);
+            let c_return_ast_node = crate::parse::Statement::Return(c_constant_ast_node);
+            let expected_asm_ast_instruction_nodes = vec![Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            }];
+            let asm_ast_instruction_nodes = parse_instructions(c_return_ast_node);
+            assert_eq!(
+                asm_ast_instruction_nodes,
+                expected_asm_ast_instruction_nodes
+            );
         }
     }
 }
