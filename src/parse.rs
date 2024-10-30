@@ -199,3 +199,32 @@ mod tests {
         assert_eq!(ast_node, expected_ast_node);
     }
 }
+
+pub mod asm {
+
+    #[derive(Debug, PartialEq)]
+    pub enum Operand {
+        Imm(u8),
+    }
+
+    pub fn parse_operand(node: crate::parse::Expression) -> Operand {
+        match node {
+            crate::parse::Expression::NumericConstant(val) => Operand::Imm(val),
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+
+        use super::*;
+
+        #[test]
+        fn parse_c_constant_to_asm_immediate() {
+            let value = 2;
+            let c_ast_node = crate::parse::Expression::NumericConstant(value);
+            let expected_asm_ast_node = Operand::Imm(value);
+            let asm_ast_node = parse_operand(c_ast_node);
+            assert_eq!(asm_ast_node, expected_asm_ast_node);
+        }
+    }
+}
