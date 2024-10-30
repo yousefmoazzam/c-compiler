@@ -19,6 +19,11 @@ pub enum FunctionDefinition {
     Function { name: Identifier, body: Statement },
 }
 
+#[derive(Debug, PartialEq)]
+pub enum ProgramDefinition {
+    Program(FunctionDefinition),
+}
+
 pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
     // The queue of tokens shouldn't be empty if the queue has been handled correctly by others, so
     // the panic shouldn't occur. Hence, the use of `expect()`.
@@ -108,6 +113,11 @@ pub fn parse_function_definition(tokens: &mut VecDeque<Token>) -> FunctionDefini
     }
 }
 
+pub fn parse_program_definition(tokens: &mut VecDeque<Token>) -> ProgramDefinition {
+    let function_defn_ast_node = parse_function_definition(tokens);
+    ProgramDefinition::Program(function_defn_ast_node)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,6 +168,33 @@ mod tests {
             body: statement_ast_node,
         };
         let ast_node = parse_function_definition(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    fn parse_program_defn_consisting_of_single_function_defn() {
+        let value = 2;
+        let identifier = "main";
+        let mut tokens = VecDeque::from([
+            Token::IntKeyword,
+            Token::Identifier(identifier.to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::NumericConstant(value),
+            Token::Semicolon,
+            Token::CloseBrace,
+        ]);
+        let expression_ast_node = Expression::NumericConstant(value);
+        let statement_ast_node = Statement::Return(expression_ast_node);
+        let function_defn_ast_node = FunctionDefinition::Function {
+            name: identifier.to_string(),
+            body: statement_ast_node,
+        };
+        let expected_ast_node = ProgramDefinition::Program(function_defn_ast_node);
+        let ast_node = parse_program_definition(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
     }
