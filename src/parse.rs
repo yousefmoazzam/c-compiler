@@ -217,6 +217,14 @@ pub mod asm {
         Ret,
     }
 
+    #[derive(Debug, PartialEq)]
+    pub enum FunctionDefinition {
+        Function {
+            name: crate::parse::Identifier,
+            instructions: Vec<Instruction>,
+        },
+    }
+
     pub fn parse_operand(node: crate::parse::Expression) -> Operand {
         match node {
             crate::parse::Expression::NumericConstant(val) => Operand::Imm(val),
@@ -229,6 +237,15 @@ pub mod asm {
                 let src = parse_operand(exp);
                 let dst = Operand::Register;
                 vec![Instruction::Mov { src: src, dst: dst }]
+            }
+        }
+    }
+
+    pub fn parse_function_definition(node: crate::parse::FunctionDefinition) -> FunctionDefinition {
+        match node {
+            crate::parse::FunctionDefinition::Function { name, body } => {
+                let instructions = parse_instructions(body);
+                FunctionDefinition::Function { name, instructions }
             }
         }
     }
@@ -261,6 +278,28 @@ pub mod asm {
                 asm_ast_instruction_nodes,
                 expected_asm_ast_instruction_nodes
             );
+        }
+
+        #[test]
+        fn parse_c_function_defn_to_asm_function_defn() {
+            let value = 2;
+            let identifier = "main";
+            let c_constant_ast_node = crate::parse::Expression::NumericConstant(value);
+            let c_return_ast_node = crate::parse::Statement::Return(c_constant_ast_node);
+            let c_function_defn_ast_node = crate::parse::FunctionDefinition::Function {
+                name: identifier.to_string(),
+                body: c_return_ast_node,
+            };
+            let expected_asm_instructions = vec![Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            }];
+            let expected_asm_ast_node = FunctionDefinition::Function {
+                name: identifier.to_string(),
+                instructions: expected_asm_instructions,
+            };
+            let asm_ast_node = parse_function_definition(c_function_defn_ast_node);
+            assert_eq!(asm_ast_node, expected_asm_ast_node);
         }
     }
 }
