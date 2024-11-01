@@ -225,6 +225,11 @@ pub mod asm {
         },
     }
 
+    #[derive(Debug, PartialEq)]
+    pub enum ProgramDefinition {
+        Program(FunctionDefinition),
+    }
+
     pub fn parse_operand(node: crate::parse::Expression) -> Operand {
         match node {
             crate::parse::Expression::NumericConstant(val) => Operand::Imm(val),
@@ -246,6 +251,15 @@ pub mod asm {
             crate::parse::FunctionDefinition::Function { name, body } => {
                 let instructions = parse_instructions(body);
                 FunctionDefinition::Function { name, instructions }
+            }
+        }
+    }
+
+    pub fn parse_program_definition(node: crate::parse::ProgramDefinition) -> ProgramDefinition {
+        match node {
+            crate::parse::ProgramDefinition::Program(c_func_defn) => {
+                let asm_function_definition = parse_function_definition(c_func_defn);
+                ProgramDefinition::Program(asm_function_definition)
             }
         }
     }
@@ -299,6 +313,31 @@ pub mod asm {
                 instructions: expected_asm_instructions,
             };
             let asm_ast_node = parse_function_definition(c_function_defn_ast_node);
+            assert_eq!(asm_ast_node, expected_asm_ast_node);
+        }
+
+        #[test]
+        fn parse_c_program_definition_to_asm_program_defn() {
+            let value = 2;
+            let identifier = "main";
+            let c_constant_ast_node = crate::parse::Expression::NumericConstant(value);
+            let c_return_ast_node = crate::parse::Statement::Return(c_constant_ast_node);
+            let c_function_defn_ast_node = crate::parse::FunctionDefinition::Function {
+                name: identifier.to_string(),
+                body: c_return_ast_node,
+            };
+            let c_program_defn_ast_node =
+                crate::parse::ProgramDefinition::Program(c_function_defn_ast_node);
+            let asm_instructions = vec![Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            }];
+            let asm_function_defn_ast_node = FunctionDefinition::Function {
+                name: identifier.to_string(),
+                instructions: asm_instructions,
+            };
+            let expected_asm_ast_node = ProgramDefinition::Program(asm_function_defn_ast_node);
+            let asm_ast_node = parse_program_definition(c_program_defn_ast_node);
             assert_eq!(asm_ast_node, expected_asm_ast_node);
         }
     }
