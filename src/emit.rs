@@ -1,4 +1,4 @@
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand};
+use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition};
 
 pub fn emit_operand(node: Operand) -> String {
     match node {
@@ -28,6 +28,12 @@ pub fn emit_function_definition(node: FunctionDefinition) -> Vec<String> {
             }
             lines
         }
+    }
+}
+
+pub fn emit_program_definition(node: ProgramDefinition) -> Vec<String> {
+    match node {
+        ProgramDefinition::Program(func_defn) => emit_function_definition(func_defn),
     }
 }
 
@@ -88,6 +94,32 @@ mod tests {
             instructions,
         };
         let asm_code = emit_function_definition(ast_node);
+        let expected_asm_code = vec![
+            format!("    .globl {}", identifier.to_string()),
+            format!("{}", identifier.to_string()),
+            format!("    movl ${}, %eax", value),
+            "    ret".to_string(),
+        ];
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_program_definition_returns_correct_vector_of_strings() {
+        let value = 2;
+        let identifier = "main";
+        let instructions = vec![
+            Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            },
+            Instruction::Ret,
+        ];
+        let function_defn = FunctionDefinition::Function {
+            name: identifier.to_string(),
+            instructions,
+        };
+        let ast_node = ProgramDefinition::Program(function_defn);
+        let asm_code = emit_program_definition(ast_node);
         let expected_asm_code = vec![
             format!("    .globl {}", identifier.to_string()),
             format!("{}", identifier.to_string()),
