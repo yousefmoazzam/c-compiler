@@ -14,7 +14,7 @@ pub fn emit_instruction(node: Instruction) -> String {
             let dst_string = emit_operand(dst);
             format!("    movl {}, {}", src_string, dst_string)
         }
-        _ => todo!(),
+        Instruction::Ret => "    ret".to_string(),
     }
 }
 
@@ -48,6 +48,14 @@ mod tests {
         };
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = "    movl $2, %eax";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_ret_instruction() {
+        let ast_node = Instruction::Ret;
+        let asm_code = emit_instruction(ast_node);
+        let expected_asm_code = "    ret";
         assert_eq!(asm_code, expected_asm_code);
     }
 }
