@@ -1,4 +1,13 @@
+use std::path::Path;
+
 use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition};
+
+pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
+    let lines = emit_program_definition(node);
+    let joined_lines = lines.join("\n");
+    std::fs::write(output, joined_lines).expect("Unable to write assembly code to file");
+    Ok(())
+}
 
 pub fn emit_operand(node: Operand) -> String {
     match node {
