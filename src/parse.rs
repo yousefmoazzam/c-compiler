@@ -44,7 +44,6 @@ pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
     let first_token = tokens
         .pop_front()
         .expect("Should have non-empty queue of tokens");
-    println!("first_token is {:?}", first_token);
     if first_token != Token::ReturnKeyword {
         todo!()
     }
