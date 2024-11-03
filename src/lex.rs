@@ -30,6 +30,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let semicolon_regex = Regex::new(r"^;").unwrap();
     let empty_line_regex = Regex::new(r"^$").unwrap();
     let negation_operator_regex = Regex::new(r"^-").unwrap();
+    let decrement_operator_regex = Regex::new(r"^--").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -157,6 +158,11 @@ pub fn lex(text: &str) -> Vec<Token> {
                     traversed_entire_line = true;
                 }
                 continue;
+            }
+
+            let res = decrement_operator_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                panic!("Decrement operator is not supported yet");
             }
 
             let res = negation_operator_regex.find(&line[idx..]);
@@ -308,5 +314,12 @@ int main() {
         ];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    #[should_panic(expected = "Decrement operator is not supported yet")]
+    fn panic_if_decrement_operator_detected() {
+        let source_code_string = "int main() {return --2;}";
+        _ = lex(source_code_string);
     }
 }
