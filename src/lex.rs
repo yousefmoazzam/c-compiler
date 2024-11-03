@@ -15,6 +15,7 @@ pub enum Token {
     NumericConstant(u8),
     Semicolon,
     NegationOperator,
+    BitwiseComplementOperator,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -31,6 +32,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let empty_line_regex = Regex::new(r"^$").unwrap();
     let negation_operator_regex = Regex::new(r"^-").unwrap();
     let decrement_operator_regex = Regex::new(r"^--").unwrap();
+    let bitwise_complement_operator_regex = Regex::new(r"^~").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -168,6 +170,17 @@ pub fn lex(text: &str) -> Vec<Token> {
             let res = negation_operator_regex.find(&line[idx..]);
             if let Some(_) = res {
                 let token = Token::NegationOperator;
+                tokens.push(token);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            let res = bitwise_complement_operator_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                let token = Token::BitwiseComplementOperator;
                 tokens.push(token);
                 idx += 1;
                 if idx == line.len() {
@@ -321,5 +334,27 @@ int main() {
     fn panic_if_decrement_operator_detected() {
         let source_code_string = "int main() {return --2;}";
         _ = lex(source_code_string);
+    }
+
+    #[test]
+    fn bitwise_negation_token_is_created() {
+        let source_code_string = "int main() {return ~(-2);}";
+        let expected_tokens = vec![
+            Token::IntKeyword,
+            Token::Identifier("main".to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::BitwiseComplementOperator,
+            Token::OpenParenthesis,
+            Token::NegationOperator,
+            Token::NumericConstant(2),
+            Token::CloseParenthesis,
+            Token::Semicolon,
+            Token::CloseBrace,
+        ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
     }
 }
