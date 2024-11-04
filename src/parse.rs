@@ -7,6 +7,7 @@ type Identifier = String;
 #[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
     BitwiseComplement,
+    Negation,
 }
 
 #[derive(Debug, PartialEq)]
@@ -36,6 +37,7 @@ pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
 
     match next_token {
         Token::BitwiseComplementOperator => UnaryOperator::BitwiseComplement,
+        Token::NegationOperator => UnaryOperator::Negation,
         _ => todo!(),
     }
 }
@@ -218,6 +220,15 @@ mod tests {
     fn parse_bitwise_complement_operator() {
         let mut tokens = VecDeque::from([Token::BitwiseComplementOperator]);
         let expected_ast_node = UnaryOperator::BitwiseComplement;
+        let ast_node = parse_unary_operator(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_negation_operator() {
+        let mut tokens = VecDeque::from([Token::NegationOperator]);
+        let expected_ast_node = UnaryOperator::Negation;
         let ast_node = parse_unary_operator(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
