@@ -13,6 +13,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     NumericConstant(u8),
+    Unary(UnaryOperator, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -46,14 +47,38 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
     // The queue of tokens shouldn't be empty if the queue has been handled correctly by others, so
     // the panic shouldn't occur. Hence, the use of `expect()`.
     let next_token = tokens
-        .pop_front()
+        .front()
         .expect("Should have non-empty queue of tokens");
-    if let Token::NumericConstant(val) = next_token {
-        return Expression::NumericConstant(val);
-    }
 
-    // TODO: Handle if the token isn't an expected variant
-    todo!()
+    match next_token {
+        Token::NumericConstant(_) => {
+            // NOTE: Not able to use the value inside the token since that's an immutable reference
+            // to the value, and we also need to consume the token (via popping it off the queue).
+            //
+            // The borrow checker won't allow the use of the value inside the token reference if a
+            // pop happens before it (due to it involving a mutation of `tokens`). Instead have to
+            // ignore the value in the token reference and use the value in the popped token.
+            let token = tokens
+                .pop_front()
+                .expect("Already confirmed at least one token in the queue");
+
+            // TODO: It's clunky to have to match against the variant again for the popped token,
+            // even though from being inside this match arm we know that the variant must be
+            // `Token::NumericConstant`.
+            //
+            // Find a nicer way to do this.
+            match token {
+                Token::NumericConstant(val) => Expression::NumericConstant(val),
+                _ => panic!(),
+            }
+        }
+        Token::BitwiseComplementOperator => {
+            let unary_operator_ast_node = parse_unary_operator(tokens);
+            let inner_expression_ast_node = parse_expression(tokens);
+            Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
+        }
+        _ => todo!(),
+    }
 }
 
 pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
@@ -144,6 +169,21 @@ mod tests {
         let value = 2;
         let mut tokens = VecDeque::from([Token::NumericConstant(value)]);
         let expected_ast_node = Expression::NumericConstant(value);
+        let ast_node = parse_expression(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    fn parse_expression_containing_bitwise_complement_operator() {
+        let value = 2;
+        let mut tokens = VecDeque::from([
+            Token::BitwiseComplementOperator,
+            Token::NumericConstant(value),
+        ]);
+        let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
+        let expected_ast_node =
+            Expression::Unary(UnaryOperator::BitwiseComplement, boxed_expression_ast_node);
         let ast_node = parse_expression(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
@@ -268,6 +308,7 @@ pub mod asm {
     pub fn parse_operand(node: crate::parse::Expression) -> Operand {
         match node {
             crate::parse::Expression::NumericConstant(val) => Operand::Imm(val),
+            _ => todo!(),
         }
     }
 
