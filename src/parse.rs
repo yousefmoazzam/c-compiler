@@ -5,6 +5,11 @@ use crate::lex::Token;
 type Identifier = String;
 
 #[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
+    BitwiseComplement,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     NumericConstant(u8),
 }
@@ -22,6 +27,17 @@ pub enum FunctionDefinition {
 #[derive(Debug, PartialEq)]
 pub enum ProgramDefinition {
     Program(FunctionDefinition),
+}
+
+pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
+    let next_token = tokens
+        .pop_front()
+        .expect("Should have non-empty queue of tokens");
+
+    match next_token {
+        Token::BitwiseComplementOperator => UnaryOperator::BitwiseComplement,
+        _ => todo!(),
+    }
 }
 
 pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
@@ -196,6 +212,15 @@ mod tests {
         let ast_node = parse_program_definition(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    fn parse_bitwise_complement_operator() {
+        let mut tokens = VecDeque::from([Token::BitwiseComplementOperator]);
+        let expected_ast_node = UnaryOperator::BitwiseComplement;
+        let ast_node = parse_unary_operator(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
     }
 }
 
