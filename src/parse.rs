@@ -84,11 +84,17 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
 
             let expression_ast_node = parse_expression(tokens);
 
-            _ = tokens
+            let trailing_token = tokens
                 .pop_front()
                 .expect("Should be a close parenthesis token for valid syntax");
+            if let Token::CloseParenthesis = trailing_token {
+                return expression_ast_node;
+            }
 
-            expression_ast_node
+            // If execution has reached here then the token after the open parenthesis + expression
+            // was not a close parenthesis token, which means that the C source code has invalid
+            // syntax.
+            panic!("Invalid syntax: expected closing parenthesis");
         }
         _ => todo!(),
     }
@@ -229,6 +235,19 @@ mod tests {
         let ast_node = parse_expression(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid syntax: expected closing parenthesis")]
+    fn panic_if_open_parenthesis_before_expression_but_no_close_parenthesis_after() {
+        let value = 2;
+        let mut tokens = VecDeque::from([
+            Token::OpenParenthesis,
+            Token::NegationOperator,
+            Token::NumericConstant(value),
+            Token::CloseBrace,
+        ]);
+        _ = parse_expression(&mut tokens);
     }
 
     #[test]
