@@ -77,6 +77,19 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
             let inner_expression_ast_node = parse_expression(tokens);
             Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
         }
+        Token::OpenParenthesis => {
+            _ = tokens
+                .pop_front()
+                .expect("Already confirmed at least one token in the queue");
+
+            let expression_ast_node = parse_expression(tokens);
+
+            _ = tokens
+                .pop_front()
+                .expect("Should be a close parenthesis token for valid syntax");
+
+            expression_ast_node
+        }
         _ => todo!(),
     }
 }
@@ -193,6 +206,23 @@ mod tests {
     fn parse_expression_containing_negation_operator() {
         let value = 2;
         let mut tokens = VecDeque::from([Token::NegationOperator, Token::NumericConstant(value)]);
+        let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
+        let expected_ast_node =
+            Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
+        let ast_node = parse_expression(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    fn parse_expression_containing_expression_wrapped_in_parentheses() {
+        let value = 2;
+        let mut tokens = VecDeque::from([
+            Token::OpenParenthesis,
+            Token::NegationOperator,
+            Token::NumericConstant(value),
+            Token::CloseParenthesis,
+        ]);
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
