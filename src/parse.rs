@@ -72,7 +72,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
                 _ => panic!(),
             }
         }
-        Token::BitwiseComplementOperator => {
+        Token::BitwiseComplementOperator | Token::NegationOperator => {
             let unary_operator_ast_node = parse_unary_operator(tokens);
             let inner_expression_ast_node = parse_expression(tokens);
             Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
@@ -184,6 +184,18 @@ mod tests {
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::BitwiseComplement, boxed_expression_ast_node);
+        let ast_node = parse_expression(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(ast_node, expected_ast_node);
+    }
+
+    #[test]
+    fn parse_expression_containing_negation_operator() {
+        let value = 2;
+        let mut tokens = VecDeque::from([Token::NegationOperator, Token::NumericConstant(value)]);
+        let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
+        let expected_ast_node =
+            Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
         let ast_node = parse_expression(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
