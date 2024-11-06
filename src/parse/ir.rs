@@ -11,6 +11,11 @@ pub enum Value {
     Constant(u8),
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Instruction {
+    Return(Value),
+}
+
 pub fn parse_unary_operator(node: c::UnaryOperator) -> UnaryOperator {
     match node {
         c::UnaryOperator::BitwiseComplement => UnaryOperator::BitwiseComplement,
@@ -22,6 +27,15 @@ pub fn parse_value(node: c::Expression) -> Value {
     match node {
         c::Expression::NumericConstant(val) => Value::Constant(val),
         _ => todo!(),
+    }
+}
+
+pub fn parse_instruction(node: c::Statement) -> Instruction {
+    match node {
+        c::Statement::Return(exp) => {
+            let value = parse_value(exp);
+            Instruction::Return(value)
+        }
     }
 }
 
@@ -51,6 +65,16 @@ mod tests {
         let c_ast_node = c::UnaryOperator::Negation;
         let expected_ir_ast_node = UnaryOperator::Negation;
         let ir_ast_node = parse_unary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_return_statement_containing_numeric_constant_to_ir_instruction() {
+        let value = 2;
+        let c_constant_ast_node = c::Expression::NumericConstant(value);
+        let c_statement_ast_node = c::Statement::Return(c_constant_ast_node);
+        let expected_ir_ast_node = Instruction::Return(Value::Constant(value));
+        let ir_ast_node = parse_instruction(c_statement_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
 }
