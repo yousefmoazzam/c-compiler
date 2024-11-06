@@ -23,7 +23,7 @@ fn main() {
         std::fs::read_to_string(input_filepath).expect("Unable to read C source code file");
     let tokens = lex::lex(&c_source_code);
     let mut token_queue = VecDeque::from(tokens);
-    let c_ast = parse::parse_program_definition(&mut token_queue);
+    let c_ast = parse::c::parse_program_definition(&mut token_queue);
     let asm_ast = parse::asm::parse_program_definition(c_ast);
     emit::emit(&output_filepath, asm_ast).unwrap();
 }
