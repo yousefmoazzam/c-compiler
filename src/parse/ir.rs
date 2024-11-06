@@ -3,6 +3,7 @@ use crate::parse::c;
 #[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
     BitwiseComplement,
+    Negation,
 }
 
 #[derive(Debug, PartialEq)]
@@ -13,7 +14,7 @@ pub enum Value {
 pub fn parse_unary_operator(node: c::UnaryOperator) -> UnaryOperator {
     match node {
         c::UnaryOperator::BitwiseComplement => UnaryOperator::BitwiseComplement,
-        _ => todo!(),
+        c::UnaryOperator::Negation => UnaryOperator::Negation,
     }
 }
 
@@ -41,6 +42,14 @@ mod tests {
     fn parse_c_complement_operstor_to_ir_unary_operator() {
         let c_ast_node = c::UnaryOperator::BitwiseComplement;
         let expected_ir_ast_node = UnaryOperator::BitwiseComplement;
+        let ir_ast_node = parse_unary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_negation_operator_to_ir_unary_operator() {
+        let c_ast_node = c::UnaryOperator::Negation;
+        let expected_ir_ast_node = UnaryOperator::Negation;
         let ir_ast_node = parse_unary_operator(c_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
