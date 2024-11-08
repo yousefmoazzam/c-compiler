@@ -45,28 +45,33 @@ pub fn parse_value(node: c::Expression) -> Value {
 }
 
 pub fn parse_instruction(node: c::Statement) -> Vec<Instruction> {
+    let mut instructions = Vec::new();
+
     match node {
-        c::Statement::Return(exp) => match exp {
-            c::Expression::NumericConstant(_) => {
-                let value = parse_value(exp);
-                vec![Instruction::Return(value)]
-            }
-            c::Expression::Unary(unop, inner_exp) => {
-                let unop_ast_node = parse_unary_operator(unop);
-                let value_ast_node = match *inner_exp {
-                    c::Expression::NumericConstant(val) => Value::Constant(val),
-                    _ => todo!(),
-                };
-                let tmp_var_ast_node = make_temporary();
-                let unop_instruction_ast_node = Instruction::Unary {
-                    op: unop_ast_node,
-                    src: value_ast_node,
-                    dst: tmp_var_ast_node.clone(),
-                };
-                let return_instruction_ast_node = Instruction::Return(tmp_var_ast_node);
-                vec![unop_instruction_ast_node, return_instruction_ast_node]
-            }
-        },
+        c::Statement::Return(exp) => {
+            let dst = recurse_unary_expression(exp, &mut instructions);
+            instructions.push(Instruction::Return(dst));
+        }
+    }
+
+    instructions
+}
+
+fn recurse_unary_expression(exp: c::Expression, instructions: &mut Vec<Instruction>) -> Value {
+    match exp {
+        c::Expression::NumericConstant(_) => parse_value(exp),
+        c::Expression::Unary(unop, boxed_inner_exp) => {
+            let src = recurse_unary_expression(*boxed_inner_exp, instructions);
+            let dst = make_temporary();
+            let unop_ast_node = parse_unary_operator(unop);
+            let unop_instruction_ast_node = Instruction::Unary {
+                op: unop_ast_node,
+                src,
+                dst: dst.clone(),
+            };
+            instructions.push(unop_instruction_ast_node);
+            dst
+        }
     }
 }
 
@@ -132,6 +137,34 @@ mod tests {
                 dst: Value::Var(expected_tmp_var_identifier.to_string()),
             },
             Instruction::Return(Value::Var(expected_tmp_var_identifier.to_string())),
+        ];
+        let ir_ast_nodes = parse_instruction(c_statement_ast_node);
+        assert_eq!(ir_ast_nodes, expected_ir_instruction_ast_nodes);
+    }
+
+    #[test]
+    fn parse_return_statement_containing_expression_with_two_unary_operators_to_ir_instruction() {
+        let value = 2;
+        let c_constant_ast_node = c::Expression::NumericConstant(value);
+        let boxed_constant_ast_node = Box::new(c_constant_ast_node);
+        let c_inner_unary_ast_node =
+            c::Expression::Unary(c::UnaryOperator::BitwiseComplement, boxed_constant_ast_node);
+        let boxed_inner_unary_ast_node = Box::new(c_inner_unary_ast_node);
+        let c_outer_unary_ast_node =
+            c::Expression::Unary(c::UnaryOperator::Negation, boxed_inner_unary_ast_node);
+        let c_statement_ast_node = c::Statement::Return(c_outer_unary_ast_node);
+        let expected_ir_instruction_ast_nodes = vec![
+            Instruction::Unary {
+                op: UnaryOperator::BitwiseComplement,
+                src: Value::Constant(value),
+                dst: Value::Var("tmp0".to_string()),
+            },
+            Instruction::Unary {
+                op: UnaryOperator::Negation,
+                src: Value::Var("tmp0".to_string()),
+                dst: Value::Var("tmp1".to_string()),
+            },
+            Instruction::Return(Value::Var("tmp1".to_string())),
         ];
         let ir_ast_nodes = parse_instruction(c_statement_ast_node);
         assert_eq!(ir_ast_nodes, expected_ir_instruction_ast_nodes);
