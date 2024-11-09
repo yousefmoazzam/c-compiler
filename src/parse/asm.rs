@@ -7,6 +7,7 @@ pub enum Operand {
     // there's no need to be able to specify which register is being used. Thus, for now,
     // always assume this variant to mean the `EAX` register.
     Register,
+    PseudoRegister(crate::parse::Identifier),
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +32,7 @@ pub enum ProgramDefinition {
 pub fn parse_operand(node: ir::Value) -> Operand {
     match node {
         ir::Value::Constant(val) => Operand::Imm(val),
-        _ => todo!(),
+        ir::Value::Var(identifier) => Operand::PseudoRegister(identifier),
     }
 }
 
@@ -83,6 +84,15 @@ mod tests {
         let value = 2;
         let ir_ast_node = ir::Value::Constant(value);
         let expected_asm_ast_node = Operand::Imm(value);
+        let asm_ast_node = parse_operand(ir_ast_node);
+        assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    fn parse_ir_var_to_asm_pseudo_register() {
+        let identifier = "tmp0";
+        let ir_ast_node = ir::Value::Var(identifier.to_string());
+        let expected_asm_ast_node = Operand::PseudoRegister(identifier.to_string());
         let asm_ast_node = parse_operand(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }

@@ -13,6 +13,7 @@ pub fn emit_operand(node: Operand) -> String {
     match node {
         Operand::Imm(val) => format!("${}", val),
         Operand::Register => "%eax".to_string(),
+        _ => todo!(),
     }
 }
 
