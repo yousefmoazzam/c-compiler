@@ -1,6 +1,11 @@
 use crate::parse::ir;
 
 #[derive(Debug, PartialEq)]
+pub enum Reg {
+    AX,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
     Not,
     Neg,
@@ -9,10 +14,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 pub enum Operand {
     Imm(u8),
-    // NOTE: Only need to use a single register (`EAX`) as an instruction operand so far, so
-    // there's no need to be able to specify which register is being used. Thus, for now,
-    // always assume this variant to mean the `EAX` register.
-    Register,
+    Register(Reg),
     PseudoRegister(crate::parse::Identifier),
 }
 
@@ -53,7 +55,7 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
     match node {
         ir::Instruction::Return(val) => {
             let src = parse_operand(val);
-            let dst = Operand::Register;
+            let dst = Operand::Register(Reg::AX);
             vec![Instruction::Mov { src: src, dst: dst }, Instruction::Ret]
         }
         _ => todo!(),
@@ -134,7 +136,7 @@ mod tests {
         let expected_asm_ast_instruction_nodes = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: Operand::Register,
+                dst: Operand::Register(Reg::AX),
             },
             Instruction::Ret,
         ];
@@ -158,7 +160,7 @@ mod tests {
         let expected_asm_instructions = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: Operand::Register,
+                dst: Operand::Register(Reg::AX),
             },
             Instruction::Ret,
         ];
@@ -184,7 +186,7 @@ mod tests {
         let asm_instructions = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: Operand::Register,
+                dst: Operand::Register(Reg::AX),
             },
             Instruction::Ret,
         ];

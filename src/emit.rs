@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition};
+use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg};
 
 pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
     let lines = emit_program_definition(node);
@@ -12,7 +12,9 @@ pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
 pub fn emit_operand(node: Operand) -> String {
     match node {
         Operand::Imm(val) => format!("${}", val),
-        Operand::Register => "%eax".to_string(),
+        Operand::Register(reg) => match reg {
+            Reg::AX => "%eax".to_string(),
+        },
         _ => todo!(),
     }
 }
@@ -61,8 +63,8 @@ mod tests {
     }
 
     #[test]
-    fn emit_register_operand() {
-        let ast_node = Operand::Register;
+    fn emit_register_ax_operand() {
+        let ast_node = Operand::Register(Reg::AX);
         let asm_code = emit_operand(ast_node);
         let expected_asm_code = "%eax";
         assert_eq!(asm_code, expected_asm_code);
@@ -73,7 +75,7 @@ mod tests {
         let value = 2;
         let ast_node = Instruction::Mov {
             src: Operand::Imm(value),
-            dst: Operand::Register,
+            dst: Operand::Register(Reg::AX),
         };
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = "    movl $2, %eax";
@@ -95,7 +97,7 @@ mod tests {
         let instructions = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: Operand::Register,
+                dst: Operand::Register(Reg::AX),
             },
             Instruction::Ret,
         ];
@@ -120,7 +122,7 @@ mod tests {
         let instructions = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: Operand::Register,
+                dst: Operand::Register(Reg::AX),
             },
             Instruction::Ret,
         ];
