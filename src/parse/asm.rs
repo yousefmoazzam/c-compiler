@@ -2,6 +2,7 @@ use crate::parse::ir;
 
 #[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
+    Not,
     Neg,
 }
 
@@ -36,8 +37,8 @@ pub enum ProgramDefinition {
 
 pub fn parse_unary_operator(node: ir::UnaryOperator) -> UnaryOperator {
     match node {
+        ir::UnaryOperator::BitwiseComplement => UnaryOperator::Not,
         ir::UnaryOperator::Negation => UnaryOperator::Neg,
-        _ => todo!(),
     }
 }
 
@@ -106,6 +107,14 @@ mod tests {
         let ir_ast_node = ir::Value::Var(identifier.to_string());
         let expected_asm_ast_node = Operand::PseudoRegister(identifier.to_string());
         let asm_ast_node = parse_operand(ir_ast_node);
+        assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    fn parse_ir_bitwise_complement_operator_to_asm_unary_operator() {
+        let ir_ast_node = ir::UnaryOperator::BitwiseComplement;
+        let expected_asm_ast_node = UnaryOperator::Not;
+        let asm_ast_node = parse_unary_operator(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 
