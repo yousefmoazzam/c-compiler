@@ -1,6 +1,11 @@
 use crate::parse::ir;
 
 #[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
+    Neg,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Operand {
     Imm(u8),
     // NOTE: Only need to use a single register (`EAX`) as an instruction operand so far, so
@@ -27,6 +32,13 @@ pub enum FunctionDefinition {
 #[derive(Debug, PartialEq)]
 pub enum ProgramDefinition {
     Program(FunctionDefinition),
+}
+
+pub fn parse_unary_operator(node: ir::UnaryOperator) -> UnaryOperator {
+    match node {
+        ir::UnaryOperator::Negation => UnaryOperator::Neg,
+        _ => todo!(),
+    }
 }
 
 pub fn parse_operand(node: ir::Value) -> Operand {
@@ -94,6 +106,14 @@ mod tests {
         let ir_ast_node = ir::Value::Var(identifier.to_string());
         let expected_asm_ast_node = Operand::PseudoRegister(identifier.to_string());
         let asm_ast_node = parse_operand(ir_ast_node);
+        assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    fn parse_ir_negation_operator_to_asm_unary_operator() {
+        let ir_ast_node = ir::UnaryOperator::Negation;
+        let expected_asm_ast_node = UnaryOperator::Neg;
+        let asm_ast_node = parse_unary_operator(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 
