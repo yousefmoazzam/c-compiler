@@ -1,6 +1,6 @@
 use crate::parse::ir;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Reg {
     AX,
 }
@@ -11,7 +11,7 @@ pub enum UnaryOperator {
     Neg,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
     Imm(u8),
     Register(Reg),
@@ -22,6 +22,7 @@ pub enum Operand {
 pub enum Instruction {
     Mov { src: Operand, dst: Operand },
     Ret,
+    Unary { op: UnaryOperator, dst: Operand },
 }
 
 #[derive(Debug, PartialEq)]
@@ -58,7 +59,18 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
             let dst = Operand::Register(Reg::AX);
             vec![Instruction::Mov { src: src, dst: dst }, Instruction::Ret]
         }
-        _ => todo!(),
+        ir::Instruction::Unary { op, src, dst } => {
+            let op = parse_unary_operator(op);
+            let src = parse_operand(src);
+            let dst = parse_operand(dst);
+            vec![
+                Instruction::Mov {
+                    src: src,
+                    dst: dst.clone(),
+                },
+                Instruction::Unary { op: op, dst: dst },
+            ]
+        }
     }
 }
 
@@ -144,6 +156,35 @@ mod tests {
         assert_eq!(
             asm_ast_instruction_nodes,
             expected_asm_ast_instruction_nodes
+        );
+    }
+
+    #[test]
+    fn parse_ir_unary_operator_instruction_to_asm_instruction() {
+        let value = 2;
+        let tmp_var_identifier = "tmp0";
+        let ir_constant_ast_node = ir::Value::Constant(value);
+        let ir_tmp_var_ast_node = ir::Value::Var(tmp_var_identifier.to_string());
+        let ir_instruction_ast_node = ir::Instruction::Unary {
+            op: ir::UnaryOperator::Negation,
+            src: ir_constant_ast_node,
+            dst: ir_tmp_var_ast_node,
+        };
+        let asm_instructions_same_dst = Operand::PseudoRegister(tmp_var_identifier.to_string());
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: asm_instructions_same_dst.clone(),
+            },
+            Instruction::Unary {
+                op: UnaryOperator::Neg,
+                dst: asm_instructions_same_dst,
+            },
+        ];
+        let asm_instruction_ast_nodes = parse_instructions(ir_instruction_ast_node);
+        assert_eq!(
+            asm_instruction_ast_nodes,
+            expected_asm_instruction_ast_nodes
         );
     }
 

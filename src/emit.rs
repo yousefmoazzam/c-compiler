@@ -27,6 +27,7 @@ pub fn emit_instruction(node: Instruction) -> String {
             format!("    movl {}, {}", src_string, dst_string)
         }
         Instruction::Ret => "    ret".to_string(),
+        _ => todo!(),
     }
 }
 
