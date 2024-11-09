@@ -1,4 +1,4 @@
-use crate::parse::c;
+use crate::parse::ir;
 
 #[derive(Debug, PartialEq)]
 pub enum Operand {
@@ -28,36 +28,46 @@ pub enum ProgramDefinition {
     Program(FunctionDefinition),
 }
 
-pub fn parse_operand(node: c::Expression) -> Operand {
+pub fn parse_operand(node: ir::Value) -> Operand {
     match node {
-        c::Expression::NumericConstant(val) => Operand::Imm(val),
+        ir::Value::Constant(val) => Operand::Imm(val),
         _ => todo!(),
     }
 }
 
-pub fn parse_instructions(node: c::Statement) -> Vec<Instruction> {
+pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
     match node {
-        c::Statement::Return(exp) => {
-            let src = parse_operand(exp);
+        ir::Instruction::Return(val) => {
+            let src = parse_operand(val);
             let dst = Operand::Register;
-            vec![Instruction::Mov { src: src, dst: dst }]
+            vec![Instruction::Mov { src: src, dst: dst }, Instruction::Ret]
+        }
+        _ => todo!(),
+    }
+}
+
+pub fn parse_function_definition(node: ir::FunctionDefinition) -> FunctionDefinition {
+    match node {
+        ir::FunctionDefinition::Function { identifier, body } => {
+            let mut all_asm_instructions = Vec::new();
+
+            for ir_instruction in body.into_iter() {
+                let mut asm_instructions = parse_instructions(ir_instruction);
+                all_asm_instructions.append(&mut asm_instructions);
+            }
+
+            FunctionDefinition::Function {
+                name: identifier,
+                instructions: all_asm_instructions,
+            }
         }
     }
 }
 
-pub fn parse_function_definition(node: c::FunctionDefinition) -> FunctionDefinition {
+pub fn parse_program_definition(node: ir::ProgramDefinition) -> ProgramDefinition {
     match node {
-        c::FunctionDefinition::Function { name, body } => {
-            let instructions = parse_instructions(body);
-            FunctionDefinition::Function { name, instructions }
-        }
-    }
-}
-
-pub fn parse_program_definition(node: c::ProgramDefinition) -> ProgramDefinition {
-    match node {
-        c::ProgramDefinition::Program(c_func_defn) => {
-            let asm_function_definition = parse_function_definition(c_func_defn);
+        ir::ProgramDefinition::Program(ir_func_defn) => {
+            let asm_function_definition = parse_function_definition(ir_func_defn);
             ProgramDefinition::Program(asm_function_definition)
         }
     }
@@ -69,24 +79,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_c_constant_to_asm_immediate() {
+    fn parse_ir_constant_to_asm_immediate() {
         let value = 2;
-        let c_ast_node = c::Expression::NumericConstant(value);
+        let ir_ast_node = ir::Value::Constant(value);
         let expected_asm_ast_node = Operand::Imm(value);
-        let asm_ast_node = parse_operand(c_ast_node);
+        let asm_ast_node = parse_operand(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 
     #[test]
-    fn parse_c_return_to_asm_instructions() {
+    fn parse_ir_return_instruction_to_asm_instructions() {
         let value = 2;
-        let c_constant_ast_node = c::Expression::NumericConstant(value);
-        let c_return_ast_node = c::Statement::Return(c_constant_ast_node);
-        let expected_asm_ast_instruction_nodes = vec![Instruction::Mov {
-            src: Operand::Imm(value),
-            dst: Operand::Register,
-        }];
-        let asm_ast_instruction_nodes = parse_instructions(c_return_ast_node);
+        let ir_constant_ast_node = ir::Value::Constant(value);
+        let ir_return_instruction_ast_node = ir::Instruction::Return(ir_constant_ast_node);
+        let expected_asm_ast_instruction_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            },
+            Instruction::Ret,
+        ];
+        let asm_ast_instruction_nodes = parse_instructions(ir_return_instruction_ast_node);
         assert_eq!(
             asm_ast_instruction_nodes,
             expected_asm_ast_instruction_nodes
@@ -94,48 +107,54 @@ mod tests {
     }
 
     #[test]
-    fn parse_c_function_defn_to_asm_function_defn() {
+    fn parse_ir_function_defn_to_asm_function_defn() {
         let value = 2;
         let identifier = "main";
-        let c_constant_ast_node = c::Expression::NumericConstant(value);
-        let c_return_ast_node = c::Statement::Return(c_constant_ast_node);
-        let c_function_defn_ast_node = c::FunctionDefinition::Function {
-            name: identifier.to_string(),
-            body: c_return_ast_node,
+        let ir_constant_ast_node = ir::Value::Constant(value);
+        let ir_return_instruction_ast_nodes = vec![ir::Instruction::Return(ir_constant_ast_node)];
+        let ir_function_defn_ast_node = ir::FunctionDefinition::Function {
+            identifier: identifier.to_string(),
+            body: ir_return_instruction_ast_nodes,
         };
-        let expected_asm_instructions = vec![Instruction::Mov {
-            src: Operand::Imm(value),
-            dst: Operand::Register,
-        }];
+        let expected_asm_instructions = vec![
+            Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            },
+            Instruction::Ret,
+        ];
         let expected_asm_ast_node = FunctionDefinition::Function {
             name: identifier.to_string(),
             instructions: expected_asm_instructions,
         };
-        let asm_ast_node = parse_function_definition(c_function_defn_ast_node);
+        let asm_ast_node = parse_function_definition(ir_function_defn_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 
     #[test]
-    fn parse_c_program_definition_to_asm_program_defn() {
+    fn parse_ir_program_definition_to_asm_program_defn() {
         let value = 2;
         let identifier = "main";
-        let c_constant_ast_node = c::Expression::NumericConstant(value);
-        let c_return_ast_node = c::Statement::Return(c_constant_ast_node);
-        let c_function_defn_ast_node = c::FunctionDefinition::Function {
-            name: identifier.to_string(),
-            body: c_return_ast_node,
+        let ir_constant_ast_node = ir::Value::Constant(value);
+        let ir_return_instruction_ast_nodes = vec![ir::Instruction::Return(ir_constant_ast_node)];
+        let ir_function_defn_ast_node = ir::FunctionDefinition::Function {
+            identifier: identifier.to_string(),
+            body: ir_return_instruction_ast_nodes,
         };
-        let c_program_defn_ast_node = c::ProgramDefinition::Program(c_function_defn_ast_node);
-        let asm_instructions = vec![Instruction::Mov {
-            src: Operand::Imm(value),
-            dst: Operand::Register,
-        }];
+        let ir_program_defn_ast_node = ir::ProgramDefinition::Program(ir_function_defn_ast_node);
+        let asm_instructions = vec![
+            Instruction::Mov {
+                src: Operand::Imm(value),
+                dst: Operand::Register,
+            },
+            Instruction::Ret,
+        ];
         let asm_function_defn_ast_node = FunctionDefinition::Function {
             name: identifier.to_string(),
             instructions: asm_instructions,
         };
         let expected_asm_ast_node = ProgramDefinition::Program(asm_function_defn_ast_node);
-        let asm_ast_node = parse_program_definition(c_program_defn_ast_node);
+        let asm_ast_node = parse_program_definition(ir_program_defn_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 }

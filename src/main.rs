@@ -24,6 +24,7 @@ fn main() {
     let tokens = lex::lex(&c_source_code);
     let mut token_queue = VecDeque::from(tokens);
     let c_ast = parse::c::parse_program_definition(&mut token_queue);
-    let asm_ast = parse::asm::parse_program_definition(c_ast);
+    let ir_ast = parse::ir::parse_program_definition(c_ast);
+    let asm_ast = parse::asm::parse_program_definition(ir_ast);
     emit::emit(&output_filepath, asm_ast).unwrap();
 }
