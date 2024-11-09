@@ -2,9 +2,6 @@ use crate::parse::c;
 
 use crate::parse::Identifier;
 
-/// Used for generating unique temporary variable names
-static mut IDENTIFIER_COUNT: usize = 0;
-
 #[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
     BitwiseComplement,
@@ -46,10 +43,11 @@ pub fn parse_value(node: c::Expression) -> Value {
 
 pub fn parse_instruction(node: c::Statement) -> Vec<Instruction> {
     let mut instructions = Vec::new();
+    let mut identifier_count: usize = 0;
 
     match node {
         c::Statement::Return(exp) => {
-            let dst = recurse_unary_expression(exp, &mut instructions);
+            let dst = recurse_unary_expression(exp, &mut instructions, &mut identifier_count);
             instructions.push(Instruction::Return(dst));
         }
     }
@@ -57,12 +55,17 @@ pub fn parse_instruction(node: c::Statement) -> Vec<Instruction> {
     instructions
 }
 
-fn recurse_unary_expression(exp: c::Expression, instructions: &mut Vec<Instruction>) -> Value {
+fn recurse_unary_expression(
+    exp: c::Expression,
+    instructions: &mut Vec<Instruction>,
+    id: &mut usize,
+) -> Value {
     match exp {
         c::Expression::NumericConstant(_) => parse_value(exp),
         c::Expression::Unary(unop, boxed_inner_exp) => {
-            let src = recurse_unary_expression(*boxed_inner_exp, instructions);
-            let dst = make_temporary();
+            let src = recurse_unary_expression(*boxed_inner_exp, instructions, id);
+            let dst = make_temporary(id);
+            *id += 1;
             let unop_ast_node = parse_unary_operator(unop);
             let unop_instruction_ast_node = Instruction::Unary {
                 op: unop_ast_node,
@@ -76,9 +79,8 @@ fn recurse_unary_expression(exp: c::Expression, instructions: &mut Vec<Instructi
 }
 
 /// Generate an AST node representing a uniquely named temporary variable
-fn make_temporary() -> Value {
-    let identifier = format!("tmp{}", unsafe { IDENTIFIER_COUNT });
-    unsafe { IDENTIFIER_COUNT += 1 };
+fn make_temporary(id: &usize) -> Value {
+    let identifier = format!("tmp{}", *id);
     Value::Var(identifier)
 }
 
