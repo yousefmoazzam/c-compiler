@@ -35,6 +35,11 @@ pub enum FunctionDefinition {
     },
 }
 
+#[derive(Debug, PartialEq)]
+pub enum ProgramDefinition {
+    Program(FunctionDefinition),
+}
+
 pub fn parse_unary_operator(node: c::UnaryOperator) -> UnaryOperator {
     match node {
         c::UnaryOperator::BitwiseComplement => UnaryOperator::BitwiseComplement,
@@ -98,6 +103,14 @@ pub fn parse_function_definition(node: c::FunctionDefinition) -> FunctionDefinit
             identifier: name,
             body: parse_instruction(body),
         },
+    }
+}
+
+pub fn parse_program_definition(node: c::ProgramDefinition) -> ProgramDefinition {
+    match node {
+        c::ProgramDefinition::Program(func_defn) => {
+            ProgramDefinition::Program(parse_function_definition(func_defn))
+        }
     }
 }
 
@@ -223,6 +236,45 @@ mod tests {
             body: ir_instruction_ast_nodes,
         };
         let ir_ast_node = parse_function_definition(c_function_defn_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_program_defn_to_ir_program_defn() {
+        let value = 2;
+        let function_identifier = "main";
+        let c_constant_ast_node = c::Expression::NumericConstant(value);
+        let boxed_constant_ast_node = Box::new(c_constant_ast_node);
+        let c_inner_unary_ast_node =
+            c::Expression::Unary(c::UnaryOperator::BitwiseComplement, boxed_constant_ast_node);
+        let boxed_inner_unary_ast_node = Box::new(c_inner_unary_ast_node);
+        let c_outer_unary_ast_node =
+            c::Expression::Unary(c::UnaryOperator::Negation, boxed_inner_unary_ast_node);
+        let c_statement_ast_node = c::Statement::Return(c_outer_unary_ast_node);
+        let c_function_defn_ast_node = c::FunctionDefinition::Function {
+            name: function_identifier.to_string(),
+            body: c_statement_ast_node,
+        };
+        let c_program_defn_ast_node = c::ProgramDefinition::Program(c_function_defn_ast_node);
+        let ir_instruction_ast_nodes = vec![
+            Instruction::Unary {
+                op: UnaryOperator::BitwiseComplement,
+                src: Value::Constant(value),
+                dst: Value::Var("tmp0".to_string()),
+            },
+            Instruction::Unary {
+                op: UnaryOperator::Negation,
+                src: Value::Var("tmp0".to_string()),
+                dst: Value::Var("tmp1".to_string()),
+            },
+            Instruction::Return(Value::Var("tmp1".to_string())),
+        ];
+        let ir_function_defn_ast_node = FunctionDefinition::Function {
+            identifier: function_identifier.to_string(),
+            body: ir_instruction_ast_nodes,
+        };
+        let expected_ir_ast_node = ProgramDefinition::Program(ir_function_defn_ast_node);
+        let ir_ast_node = parse_program_definition(c_program_defn_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
 }
