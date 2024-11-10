@@ -16,6 +16,7 @@ pub enum Operand {
     Imm(u8),
     Register(Reg),
     PseudoRegister(crate::parse::Identifier),
+    Stack(i8),
 }
 
 #[derive(Debug, PartialEq)]
@@ -238,5 +239,48 @@ mod tests {
         let expected_asm_ast_node = ProgramDefinition::Program(asm_function_defn_ast_node);
         let asm_ast_node = parse_program_definition(ir_program_defn_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+}
+
+mod second_pass {
+    use std::collections::HashMap;
+
+    use super::*;
+
+    /// All temporary variables put onto the stack are assumed to be 4-byte integers
+    const TMP_VAR_BYTE_LEN: usize = 4;
+
+    pub fn parse_operand(node: Operand, map: &mut HashMap<String, i8>, offset: &mut i8) -> Operand {
+        match node {
+            Operand::PseudoRegister(identifier) => {
+                *offset -= TMP_VAR_BYTE_LEN as i8;
+                (*map).insert(identifier.to_string(), *offset);
+                Operand::Stack(*offset)
+            }
+            _ => todo!(),
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+
+        use super::*;
+
+        #[test]
+        fn convert_pseudo_register_to_stack_address_and_update_hash_table_and_offset() {
+            let mut offset = 0;
+            let mut map: HashMap<String, i8> = HashMap::new();
+            let identifier = "tmp0";
+            let input_asm_ast_node = Operand::PseudoRegister(identifier.to_string());
+            let expected_output_asm_ast_node = Operand::Stack(-(TMP_VAR_BYTE_LEN as i8));
+            let transformed_asm_ast_node = parse_operand(input_asm_ast_node, &mut map, &mut offset);
+            assert_eq!(-(TMP_VAR_BYTE_LEN as i8), offset);
+            assert_eq!(
+                true,
+                map.get(identifier)
+                    .is_some_and(|val| *val == -(TMP_VAR_BYTE_LEN as i8))
+            );
+            assert_eq!(expected_output_asm_ast_node, transformed_asm_ast_node);
+        }
     }
 }
