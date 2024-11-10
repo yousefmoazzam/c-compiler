@@ -252,13 +252,39 @@ mod second_pass {
 
     pub fn parse_operand(node: Operand, map: &mut HashMap<String, i8>, offset: &mut i8) -> Operand {
         match node {
-            Operand::PseudoRegister(identifier) => {
-                *offset -= TMP_VAR_BYTE_LEN as i8;
-                (*map).insert(identifier.to_string(), *offset);
-                Operand::Stack(*offset)
-            }
+            Operand::PseudoRegister(identifier) => match map.get(&identifier) {
+                Some(value) => Operand::Stack(*value),
+                None => {
+                    *offset -= TMP_VAR_BYTE_LEN as i8;
+                    (*map).insert(identifier.to_string(), *offset);
+                    Operand::Stack(*offset)
+                }
+            },
             _ => node,
         }
+    }
+
+    pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
+        let mut instructions = Vec::new();
+        let mut offset = 0;
+        let mut map: HashMap<String, i8> = HashMap::new();
+
+        for instruction in nodes.into_iter() {
+            match instruction {
+                Instruction::Mov { src, dst } => {
+                    let src = parse_operand(src, &mut map, &mut offset);
+                    let dst = parse_operand(dst, &mut map, &mut offset);
+                    instructions.push(Instruction::Mov { src, dst });
+                }
+                Instruction::Unary { op, dst } => {
+                    let dst = parse_operand(dst, &mut map, &mut offset);
+                    instructions.push(Instruction::Unary { op, dst });
+                }
+                _ => todo!(),
+            }
+        }
+
+        instructions
     }
 
     #[cfg(test)]
@@ -294,6 +320,41 @@ mod second_pass {
             assert_eq!(0, offset);
             assert_eq!(0, map.len());
             assert_eq!(input_asm_ast_node, output_asm_ast_node);
+        }
+
+        #[test]
+        fn pseudo_registers_with_same_identifier_get_same_stack_address() {
+            let value = 2;
+            let tmp_var_identifier = "tmp0";
+            let asm_instructions_same_dst = Operand::PseudoRegister(tmp_var_identifier.to_string());
+            let input_asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: asm_instructions_same_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: asm_instructions_same_dst,
+                },
+            ];
+            let expected_asm_instructions_same_stack_addr_dst =
+                Operand::Stack(-(TMP_VAR_BYTE_LEN as i8));
+            let expected_asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: expected_asm_instructions_same_stack_addr_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: expected_asm_instructions_same_stack_addr_dst,
+                },
+            ];
+            let output_asm_instruction_ast_nodes =
+                parse_instructions(input_asm_instruction_ast_nodes);
+            assert_eq!(
+                expected_asm_instruction_ast_nodes,
+                output_asm_instruction_ast_nodes
+            );
         }
     }
 }
