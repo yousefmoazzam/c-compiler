@@ -257,7 +257,7 @@ mod second_pass {
                 (*map).insert(identifier.to_string(), *offset);
                 Operand::Stack(*offset)
             }
-            _ => todo!(),
+            _ => node,
         }
     }
 
@@ -281,6 +281,19 @@ mod second_pass {
                     .is_some_and(|val| *val == -(TMP_VAR_BYTE_LEN as i8))
             );
             assert_eq!(expected_output_asm_ast_node, transformed_asm_ast_node);
+        }
+
+        #[test]
+        fn non_pseudo_register_operand_is_left_unchanged() {
+            let mut offset = 0;
+            let mut map: HashMap<String, i8> = HashMap::new();
+            let value = 2;
+            let input_asm_ast_node = Operand::Imm(value);
+            let output_asm_ast_node =
+                parse_operand(input_asm_ast_node.clone(), &mut map, &mut offset);
+            assert_eq!(0, offset);
+            assert_eq!(0, map.len());
+            assert_eq!(input_asm_ast_node, output_asm_ast_node);
         }
     }
 }
