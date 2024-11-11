@@ -264,20 +264,19 @@ mod second_pass {
         }
     }
 
-    pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
+    pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec<Instruction> {
         let mut instructions = Vec::new();
-        let mut offset = 0;
         let mut map: HashMap<String, i8> = HashMap::new();
 
         for instruction in nodes.into_iter() {
             match instruction {
                 Instruction::Mov { src, dst } => {
-                    let src = parse_operand(src, &mut map, &mut offset);
-                    let dst = parse_operand(dst, &mut map, &mut offset);
+                    let src = parse_operand(src, &mut map, stack_offset);
+                    let dst = parse_operand(dst, &mut map, stack_offset);
                     instructions.push(Instruction::Mov { src, dst });
                 }
                 Instruction::Unary { op, dst } => {
-                    let dst = parse_operand(dst, &mut map, &mut offset);
+                    let dst = parse_operand(dst, &mut map, stack_offset);
                     instructions.push(Instruction::Unary { op, dst });
                 }
                 _ => todo!(),
@@ -287,12 +286,29 @@ mod second_pass {
         instructions
     }
 
-    pub fn parse_function_definition(node: FunctionDefinition) -> FunctionDefinition {
+    pub fn parse_function_definition(
+        node: FunctionDefinition,
+        stack_offset: &mut i8,
+    ) -> FunctionDefinition {
         match node {
             FunctionDefinition::Function { name, instructions } => FunctionDefinition::Function {
                 name,
-                instructions: parse_instructions(instructions),
+                instructions: parse_instructions(instructions, stack_offset),
             },
+        }
+    }
+
+    pub fn parse_program_definition(node: ProgramDefinition) -> (ProgramDefinition, i8) {
+        let mut stack_offset = 0;
+
+        match node {
+            ProgramDefinition::Program(func_defn) => {
+                let program_defn = ProgramDefinition::Program(parse_function_definition(
+                    func_defn,
+                    &mut stack_offset,
+                ));
+                (program_defn, stack_offset)
+            }
         }
     }
 
@@ -358,8 +374,9 @@ mod second_pass {
                     dst: expected_asm_instructions_same_stack_addr_dst,
                 },
             ];
+            let mut stack_offset = 0;
             let output_asm_instruction_ast_nodes =
-                parse_instructions(input_asm_instruction_ast_nodes);
+                parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
             assert_eq!(
                 expected_asm_instruction_ast_nodes,
                 output_asm_instruction_ast_nodes
@@ -405,12 +422,66 @@ mod second_pass {
                 instructions: expected_asm_instruction_ast_nodes,
             };
 
+            let mut stack_offset = 0;
             let output_function_defn_asm_ast_node =
-                parse_function_definition(input_function_defn_asm_ast_node);
+                parse_function_definition(input_function_defn_asm_ast_node, &mut stack_offset);
             assert_eq!(
                 expected_output_function_defn_asm_ast_node,
                 output_function_defn_asm_ast_node
             );
+        }
+
+        #[test]
+        fn program_parsing_returns_final_stack_offset_and_correct_program_defn() {
+            let value = 2;
+            let tmp_var_identifier = "tmp0";
+            let function_name_identifier = "main";
+
+            let asm_instructions_same_dst = Operand::PseudoRegister(tmp_var_identifier.to_string());
+            let asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: asm_instructions_same_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: asm_instructions_same_dst,
+                },
+            ];
+            let function_defn_asm_ast_node = FunctionDefinition::Function {
+                name: function_name_identifier.to_string(),
+                instructions: asm_instruction_ast_nodes,
+            };
+            let input_program_defn_ast_node =
+                ProgramDefinition::Program(function_defn_asm_ast_node);
+
+            let expected_asm_instructions_same_stack_addr_dst =
+                Operand::Stack(-(TMP_VAR_BYTE_LEN as i8));
+            let expected_asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: expected_asm_instructions_same_stack_addr_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: expected_asm_instructions_same_stack_addr_dst,
+                },
+            ];
+            let output_function_defn_asm_ast_node = FunctionDefinition::Function {
+                name: function_name_identifier.to_string(),
+                instructions: expected_asm_instruction_ast_nodes,
+            };
+            let expected_program_defn_asm_ast_node =
+                ProgramDefinition::Program(output_function_defn_asm_ast_node);
+            let expected_stack_offset = -(TMP_VAR_BYTE_LEN as i8);
+
+            let (output_program_defn_ast_node, output_stack_offset) =
+                parse_program_definition(input_program_defn_ast_node);
+            assert_eq!(
+                expected_program_defn_asm_ast_node,
+                output_program_defn_ast_node
+            );
+            assert_eq!(expected_stack_offset, output_stack_offset);
         }
     }
 }
