@@ -287,6 +287,15 @@ mod second_pass {
         instructions
     }
 
+    pub fn parse_function_definition(node: FunctionDefinition) -> FunctionDefinition {
+        match node {
+            FunctionDefinition::Function { name, instructions } => FunctionDefinition::Function {
+                name,
+                instructions: parse_instructions(instructions),
+            },
+        }
+    }
+
     #[cfg(test)]
     mod tests {
 
@@ -354,6 +363,53 @@ mod second_pass {
             assert_eq!(
                 expected_asm_instruction_ast_nodes,
                 output_asm_instruction_ast_nodes
+            );
+        }
+
+        #[test]
+        fn function_defn_name_left_unchanged() {
+            let value = 2;
+            let tmp_var_identifier = "tmp0";
+            let function_name_identifier = "main";
+
+            let asm_instructions_same_dst = Operand::PseudoRegister(tmp_var_identifier.to_string());
+            let asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: asm_instructions_same_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: asm_instructions_same_dst,
+                },
+            ];
+            let input_function_defn_asm_ast_node = FunctionDefinition::Function {
+                name: function_name_identifier.to_string(),
+                instructions: asm_instruction_ast_nodes,
+            };
+
+            let expected_asm_instructions_same_stack_addr_dst =
+                Operand::Stack(-(TMP_VAR_BYTE_LEN as i8));
+            let expected_asm_instruction_ast_nodes = vec![
+                Instruction::Mov {
+                    src: Operand::Imm(value),
+                    dst: expected_asm_instructions_same_stack_addr_dst.clone(),
+                },
+                Instruction::Unary {
+                    op: UnaryOperator::Neg,
+                    dst: expected_asm_instructions_same_stack_addr_dst,
+                },
+            ];
+            let expected_output_function_defn_asm_ast_node = FunctionDefinition::Function {
+                name: function_name_identifier.to_string(),
+                instructions: expected_asm_instruction_ast_nodes,
+            };
+
+            let output_function_defn_asm_ast_node =
+                parse_function_definition(input_function_defn_asm_ast_node);
+            assert_eq!(
+                expected_output_function_defn_asm_ast_node,
+                output_function_defn_asm_ast_node
             );
         }
     }
