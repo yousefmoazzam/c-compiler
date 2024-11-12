@@ -1,9 +1,8 @@
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition};
+use crate::parse::asm::{
+    FunctionDefinition, Instruction, Operand, ProgramDefinition, TMP_VAR_BYTE_LEN,
+};
 
 use std::collections::HashMap;
-
-/// All temporary variables put onto the stack are assumed to be 4-byte integers
-const TMP_VAR_BYTE_LEN: usize = 4;
 
 pub fn parse_operand(node: Operand, map: &mut HashMap<String, i8>, offset: &mut i8) -> Operand {
     match node {

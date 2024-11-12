@@ -1,6 +1,9 @@
 pub mod first_pass;
 mod second_pass;
 
+/// All temporary variables put onto the stack are assumed to be 4-byte integers
+const TMP_VAR_BYTE_LEN: usize = 4;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Reg {
     AX,
