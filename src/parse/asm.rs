@@ -1,5 +1,6 @@
 pub mod first_pass;
 mod second_pass;
+mod third_pass;
 
 /// All temporary variables put onto the stack are assumed to be 4-byte integers
 const TMP_VAR_BYTE_LEN: usize = 4;
@@ -28,6 +29,7 @@ pub enum Instruction {
     Mov { src: Operand, dst: Operand },
     Ret,
     Unary { op: UnaryOperator, dst: Operand },
+    AllocateStack(i8),
 }
 
 #[derive(Debug, PartialEq)]
