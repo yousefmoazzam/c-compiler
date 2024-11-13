@@ -30,7 +30,7 @@ pub enum Instruction {
     Mov { src: Operand, dst: Operand },
     Ret,
     Unary { op: UnaryOperator, dst: Operand },
-    AllocateStack(i8),
+    AllocateStack(u8),
 }
 
 #[derive(Debug, PartialEq)]

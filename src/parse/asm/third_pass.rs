@@ -8,7 +8,7 @@ pub fn parse_function_definition(node: FunctionDefinition, stack_offset: i8) -> 
         } => {
             // NOTE: Inserting at the front of a vector is the worst case scenario (all elements
             // need to be shifted), so might be worth rethinking this at some point.
-            instructions.insert(0, Instruction::AllocateStack(stack_offset));
+            instructions.insert(0, Instruction::AllocateStack(-(stack_offset) as u8));
             FunctionDefinition::Function { name, instructions }
         }
     }
@@ -72,7 +72,7 @@ mod tests {
 
         let expected_asm_instructions_same_stack_addr_dst = Operand::Stack(stack_offset);
         let expected_asm_instruction_ast_nodes = vec![
-            Instruction::AllocateStack(stack_offset),
+            Instruction::AllocateStack(-(stack_offset) as u8),
             Instruction::Mov {
                 src: Operand::Imm(value),
                 dst: expected_asm_instructions_same_stack_addr_dst.clone(),
