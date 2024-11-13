@@ -28,7 +28,7 @@ pub fn emit_operand(node: Operand) -> String {
 pub fn emit_unary_operator(node: UnaryOperator) -> String {
     match node {
         UnaryOperator::Neg => "negl".to_string(),
-        _ => todo!(),
+        UnaryOperator::Not => "notl".to_string(),
     }
 }
 
@@ -113,6 +113,14 @@ mod tests {
         let ast_node = UnaryOperator::Neg;
         let asm_code = emit_unary_operator(ast_node);
         let expected_asm_code = "negl";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_not_unary_operator() {
+        let ast_node = UnaryOperator::Not;
+        let asm_code = emit_unary_operator(ast_node);
+        let expected_asm_code = "notl";
         assert_eq!(asm_code, expected_asm_code);
     }
 
