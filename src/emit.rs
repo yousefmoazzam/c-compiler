@@ -14,6 +14,7 @@ pub fn emit_operand(node: Operand) -> String {
         Operand::Imm(val) => format!("${}", val),
         Operand::Register(reg) => match reg {
             Reg::AX => "%eax".to_string(),
+            _ => todo!(),
         },
         _ => todo!(),
     }
