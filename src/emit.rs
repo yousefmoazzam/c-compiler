@@ -41,7 +41,11 @@ pub fn emit_instruction(node: Instruction) -> String {
         }
         Instruction::Ret => "    ret".to_string(),
         Instruction::AllocateStack(offset) => format!("    subq ${}, %rsp", offset),
-        _ => todo!(),
+        Instruction::Unary { op, dst } => {
+            let op_string = emit_unary_operator(op);
+            let dst_string = emit_operand(dst);
+            format!("    {} {}", op_string, dst_string)
+        }
     }
 }
 
@@ -151,6 +155,18 @@ mod tests {
         let ast_node = Instruction::AllocateStack(offset);
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = format!("    subq ${}, %rsp", offset);
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_unary_instruction() {
+        let value = 2;
+        let ast_node = Instruction::Unary {
+            op: UnaryOperator::Neg,
+            dst: Operand::Imm(value),
+        };
+        let asm_code = emit_instruction(ast_node);
+        let expected_asm_code = format!("    negl ${}", value);
         assert_eq!(asm_code, expected_asm_code);
     }
 
