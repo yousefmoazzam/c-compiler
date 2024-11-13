@@ -32,21 +32,31 @@ pub fn emit_unary_operator(node: UnaryOperator) -> String {
     }
 }
 
-pub fn emit_instruction(node: Instruction) -> String {
+pub fn emit_instruction(node: Instruction) -> Vec<String> {
+    let mut lines = Vec::new();
+
     match node {
         Instruction::Mov { src, dst } => {
             let src_string = emit_operand(src);
             let dst_string = emit_operand(dst);
-            format!("    movl {}, {}", src_string, dst_string)
+            lines.push(format!("    movl {}, {}", src_string, dst_string));
         }
-        Instruction::Ret => "    ret".to_string(),
-        Instruction::AllocateStack(offset) => format!("    subq ${}, %rsp", offset),
+        Instruction::Ret => {
+            lines.append(&mut vec![
+                "    movq %rbp, %rsp".to_string(),
+                "    popq %rbp".to_string(),
+                "    ret".to_string(),
+            ]);
+        }
+        Instruction::AllocateStack(offset) => lines.push(format!("    subq ${}, %rsp", offset)),
         Instruction::Unary { op, dst } => {
             let op_string = emit_unary_operator(op);
             let dst_string = emit_operand(dst);
-            format!("    {} {}", op_string, dst_string)
+            lines.push(format!("    {} {}", op_string, dst_string));
         }
     }
+
+    lines
 }
 
 pub fn emit_function_definition(node: FunctionDefinition) -> Vec<String> {
@@ -54,8 +64,8 @@ pub fn emit_function_definition(node: FunctionDefinition) -> Vec<String> {
         FunctionDefinition::Function { name, instructions } => {
             let mut lines = vec![format!("    .globl {}", name), format!("{}:", name)];
             for instruction in instructions {
-                let instruction_string = emit_instruction(instruction);
-                lines.push(instruction_string);
+                let mut instruction_strings = emit_instruction(instruction);
+                lines.append(&mut instruction_strings);
             }
             lines
         }
@@ -137,7 +147,7 @@ mod tests {
             dst: Operand::Register(Reg::AX),
         };
         let asm_code = emit_instruction(ast_node);
-        let expected_asm_code = "    movl $2, %eax";
+        let expected_asm_code = vec!["    movl $2, %eax"];
         assert_eq!(asm_code, expected_asm_code);
     }
 
@@ -145,7 +155,11 @@ mod tests {
     fn emit_ret_instruction() {
         let ast_node = Instruction::Ret;
         let asm_code = emit_instruction(ast_node);
-        let expected_asm_code = "    ret";
+        let expected_asm_code = vec![
+            "    movq %rbp, %rsp".to_string(),
+            "    popq %rbp".to_string(),
+            "    ret".to_string(),
+        ];
         assert_eq!(asm_code, expected_asm_code);
     }
 
@@ -154,7 +168,7 @@ mod tests {
         let offset = 8;
         let ast_node = Instruction::AllocateStack(offset);
         let asm_code = emit_instruction(ast_node);
-        let expected_asm_code = format!("    subq ${}, %rsp", offset);
+        let expected_asm_code = vec![format!("    subq ${}, %rsp", offset)];
         assert_eq!(asm_code, expected_asm_code);
     }
 
@@ -166,7 +180,7 @@ mod tests {
             dst: Operand::Imm(value),
         };
         let asm_code = emit_instruction(ast_node);
-        let expected_asm_code = format!("    negl ${}", value);
+        let expected_asm_code = vec![format!("    negl ${}", value)];
         assert_eq!(asm_code, expected_asm_code);
     }
 
@@ -190,6 +204,8 @@ mod tests {
             format!("    .globl {}", identifier.to_string()),
             format!("{}:", identifier.to_string()),
             format!("    movl ${}, %eax", value),
+            "    movq %rbp, %rsp".to_string(),
+            "    popq %rbp".to_string(),
             "    ret".to_string(),
         ];
         assert_eq!(asm_code, expected_asm_code);
@@ -216,6 +232,8 @@ mod tests {
             format!("    .globl {}", identifier.to_string()),
             format!("{}:", identifier.to_string()),
             format!("    movl ${}, %eax", value),
+            "    movq %rbp, %rsp".to_string(),
+            "    popq %rbp".to_string(),
             "    ret".to_string(),
         ];
         assert_eq!(asm_code, expected_asm_code);
