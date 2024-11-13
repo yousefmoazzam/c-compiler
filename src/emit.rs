@@ -40,6 +40,7 @@ pub fn emit_instruction(node: Instruction) -> String {
             format!("    movl {}, {}", src_string, dst_string)
         }
         Instruction::Ret => "    ret".to_string(),
+        Instruction::AllocateStack(offset) => format!("    subq ${}, %rsp", offset),
         _ => todo!(),
     }
 }
@@ -141,6 +142,15 @@ mod tests {
         let ast_node = Instruction::Ret;
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = "    ret";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_allocate_stack_instruction() {
+        let offset = 8;
+        let ast_node = Instruction::AllocateStack(offset);
+        let asm_code = emit_instruction(ast_node);
+        let expected_asm_code = format!("    subq ${}, %rsp", offset);
         assert_eq!(asm_code, expected_asm_code);
     }
 
