@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg};
+use crate::parse::asm::{
+    FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg, UnaryOperator,
+};
 
 pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
     let lines = emit_program_definition(node);
@@ -20,6 +22,13 @@ pub fn emit_operand(node: Operand) -> String {
         Operand::PseudoRegister(_) => {
             panic!("Pseudo-register operand is invalid at code emission stage")
         }
+    }
+}
+
+pub fn emit_unary_operator(node: UnaryOperator) -> String {
+    match node {
+        UnaryOperator::Neg => "negl".to_string(),
+        _ => todo!(),
     }
 }
 
@@ -97,6 +106,14 @@ mod tests {
     fn panic_if_pseudo_register_operand_encountered() {
         let ast_node = Operand::PseudoRegister("tmp0".to_string());
         emit_operand(ast_node);
+    }
+
+    #[test]
+    fn emit_neg_unary_operator() {
+        let ast_node = UnaryOperator::Neg;
+        let asm_code = emit_unary_operator(ast_node);
+        let expected_asm_code = "negl";
+        assert_eq!(asm_code, expected_asm_code);
     }
 
     #[test]
