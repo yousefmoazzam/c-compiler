@@ -17,7 +17,9 @@ pub fn emit_operand(node: Operand) -> String {
             Reg::R10D => "%r10d".to_string(),
         },
         Operand::Stack(offset) => format!("{}(%rbp)", offset),
-        _ => todo!(),
+        Operand::PseudoRegister(_) => {
+            panic!("Pseudo-register operand is invalid at code emission stage")
+        }
     }
 }
 
@@ -88,6 +90,13 @@ mod tests {
         let asm_code = emit_operand(ast_node);
         let expected_asm_code = format!("{}(%rbp)", offset);
         assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    #[should_panic(expected = "Pseudo-register operand is invalid at code emission stage")]
+    fn panic_if_pseudo_register_operand_encountered() {
+        let ast_node = Operand::PseudoRegister("tmp0".to_string());
+        emit_operand(ast_node);
     }
 
     #[test]
