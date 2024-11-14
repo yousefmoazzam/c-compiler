@@ -2,6 +2,8 @@ pub mod first_pass;
 mod second_pass;
 mod third_pass;
 
+use crate::parse::ir;
+
 /// All temporary variables put onto the stack are assumed to be 4-byte integers
 const TMP_VAR_BYTE_LEN: usize = 4;
 
@@ -44,4 +46,10 @@ pub enum FunctionDefinition {
 #[derive(Debug, PartialEq)]
 pub enum ProgramDefinition {
     Program(FunctionDefinition),
+}
+
+pub fn parse_program_definition(ir_ast: ir::ProgramDefinition) -> ProgramDefinition {
+    let asm_ast = first_pass::parse_program_definition(ir_ast);
+    let (asm_ast, stack_offset) = second_pass::parse_program_definition(asm_ast);
+    third_pass::parse_program_definition(asm_ast, stack_offset)
 }
