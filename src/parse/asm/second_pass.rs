@@ -36,7 +36,7 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
             Instruction::AllocateStack(_) => {
                 panic!("Stack allocation instruction shouldn't be present in second pass")
             }
-            _ => todo!(),
+            Instruction::Ret => instructions.push(instruction),
         }
     }
 
@@ -146,6 +146,15 @@ mod tests {
         let input_asm_instruction_ast_nodes =
             vec![Instruction::AllocateStack(-(stack_offset) as u8)];
         _ = parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset)
+    }
+
+    #[test]
+    fn dont_transform_return_instruction() {
+        let mut stack_offset = -4;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Ret];
+        let output_asm_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
+        assert_eq!(vec![Instruction::Ret], output_asm_instruction_ast_nodes);
     }
 
     #[test]
