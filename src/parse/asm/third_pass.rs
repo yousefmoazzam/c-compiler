@@ -1,4 +1,12 @@
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand, Reg};
+use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg};
+
+pub fn parse_program_definition(node: ProgramDefinition, stack_offset: i8) -> ProgramDefinition {
+    match node {
+        ProgramDefinition::Program(func_defn) => {
+            ProgramDefinition::Program(parse_function_definition(func_defn, stack_offset))
+        }
+    }
+}
 
 pub fn parse_function_definition(node: FunctionDefinition, stack_offset: i8) -> FunctionDefinition {
     match node {
