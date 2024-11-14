@@ -33,6 +33,9 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
                 let dst = parse_operand(dst, &mut map, stack_offset);
                 instructions.push(Instruction::Unary { op, dst });
             }
+            Instruction::AllocateStack(_) => {
+                panic!("Stack allocation instruction shouldn't be present in second pass")
+            }
             _ => todo!(),
         }
     }
@@ -134,6 +137,15 @@ mod tests {
             expected_asm_instruction_ast_nodes,
             output_asm_instruction_ast_nodes
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "Stack allocation instruction shouldn't be present in second pass")]
+    fn panic_if_allocate_stack_instruction_encountered() {
+        let mut stack_offset = -4;
+        let input_asm_instruction_ast_nodes =
+            vec![Instruction::AllocateStack(-(stack_offset) as u8)];
+        _ = parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset)
     }
 
     #[test]
