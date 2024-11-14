@@ -62,7 +62,12 @@ pub fn emit_instruction(node: Instruction) -> Vec<String> {
 pub fn emit_function_definition(node: FunctionDefinition) -> Vec<String> {
     match node {
         FunctionDefinition::Function { name, instructions } => {
-            let mut lines = vec![format!("    .globl {}", name), format!("{}:", name)];
+            let mut lines = vec![
+                format!("    .globl {}", name),
+                format!("{}:", name),
+                "    pushq %rbp".to_string(),
+                "    movq %rsp, %rbp".to_string(),
+            ];
             for instruction in instructions {
                 let mut instruction_strings = emit_instruction(instruction);
                 lines.append(&mut instruction_strings);
@@ -203,6 +208,8 @@ mod tests {
         let expected_asm_code = vec![
             format!("    .globl {}", identifier.to_string()),
             format!("{}:", identifier.to_string()),
+            "    pushq %rbp".to_string(),
+            "    movq %rsp, %rbp".to_string(),
             format!("    movl ${}, %eax", value),
             "    movq %rbp, %rsp".to_string(),
             "    popq %rbp".to_string(),
@@ -231,6 +238,8 @@ mod tests {
         let expected_asm_code = vec![
             format!("    .globl {}", identifier.to_string()),
             format!("{}:", identifier.to_string()),
+            "    pushq %rbp".to_string(),
+            "    movq %rsp, %rbp".to_string(),
             format!("    movl ${}, %eax", value),
             "    movq %rbp, %rsp".to_string(),
             "    popq %rbp".to_string(),
