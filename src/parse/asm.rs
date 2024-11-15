@@ -1,4 +1,4 @@
-pub mod first_pass;
+mod first_pass;
 mod second_pass;
 mod third_pass;
 
