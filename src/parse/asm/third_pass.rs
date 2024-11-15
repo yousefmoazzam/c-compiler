@@ -17,7 +17,10 @@ pub fn parse_function_definition(node: FunctionDefinition, stack_offset: i8) -> 
             // NOTE: Inserting at the front of a vector is the worst case scenario (all elements
             // need to be shifted), so might be worth rethinking this at some point.
             instructions.insert(0, Instruction::AllocateStack(-(stack_offset) as u8));
-            FunctionDefinition::Function { name, instructions }
+            FunctionDefinition::Function {
+                name,
+                instructions: parse_instructions(instructions),
+            }
         }
     }
 }
