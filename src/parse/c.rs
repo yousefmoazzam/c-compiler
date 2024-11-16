@@ -36,7 +36,7 @@ pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
         .expect("Should have non-empty queue of tokens");
 
     match next_token {
-        Token::BitwiseComplementOperator => UnaryOperator::BitwiseComplement,
+        Token::Tilde => UnaryOperator::BitwiseComplement,
         Token::Minus => UnaryOperator::Negation,
         _ => todo!(),
     }
@@ -71,7 +71,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
                 _ => panic!(),
             }
         }
-        Token::BitwiseComplementOperator | Token::Minus => {
+        Token::Tilde | Token::Minus => {
             let unary_operator_ast_node = parse_unary_operator(tokens);
             let inner_expression_ast_node = parse_expression(tokens);
             Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
@@ -195,10 +195,7 @@ mod tests {
     #[test]
     fn parse_expression_containing_bitwise_complement_operator() {
         let value = 2;
-        let mut tokens = VecDeque::from([
-            Token::BitwiseComplementOperator,
-            Token::NumericConstant(value),
-        ]);
+        let mut tokens = VecDeque::from([Token::Tilde, Token::NumericConstant(value)]);
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::BitwiseComplement, boxed_expression_ast_node);
@@ -318,7 +315,7 @@ mod tests {
 
     #[test]
     fn parse_bitwise_complement_operator() {
-        let mut tokens = VecDeque::from([Token::BitwiseComplementOperator]);
+        let mut tokens = VecDeque::from([Token::Tilde]);
         let expected_ast_node = UnaryOperator::BitwiseComplement;
         let ast_node = parse_unary_operator(&mut tokens);
         assert_eq!(0, tokens.len());

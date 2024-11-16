@@ -15,7 +15,7 @@ pub enum Token {
     NumericConstant(u8),
     Semicolon,
     Minus,
-    BitwiseComplementOperator,
+    Tilde,
     Plus,
     Asterisk,
     ForwardSlash,
@@ -36,7 +36,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let empty_line_regex = Regex::new(r"^$").unwrap();
     let minus_regex = Regex::new(r"^-").unwrap();
     let decrement_operator_regex = Regex::new(r"^--").unwrap();
-    let bitwise_complement_operator_regex = Regex::new(r"^~").unwrap();
+    let tilde_regex = Regex::new(r"^~").unwrap();
     let plus_regex = Regex::new(r"^\+").unwrap();
     let asterisk_regex = Regex::new(r"^\*").unwrap();
     let forward_slash_regex = Regex::new(r"^/").unwrap();
@@ -186,9 +186,9 @@ pub fn lex(text: &str) -> Vec<Token> {
                 continue;
             }
 
-            let res = bitwise_complement_operator_regex.find(&line[idx..]);
+            let res = tilde_regex.find(&line[idx..]);
             if let Some(_) = res {
-                let token = Token::BitwiseComplementOperator;
+                let token = Token::Tilde;
                 tokens.push(token);
                 idx += 1;
                 if idx == line.len() {
@@ -382,7 +382,7 @@ int main() {
     }
 
     #[test]
-    fn bitwise_negation_token_is_created() {
+    fn tilde_token_is_created() {
         let source_code_string = "int main() {return ~(-2);}";
         let expected_tokens = vec![
             Token::IntKeyword,
@@ -391,7 +391,7 @@ int main() {
             Token::CloseParenthesis,
             Token::OpenBrace,
             Token::ReturnKeyword,
-            Token::BitwiseComplementOperator,
+            Token::Tilde,
             Token::OpenParenthesis,
             Token::Minus,
             Token::NumericConstant(2),
