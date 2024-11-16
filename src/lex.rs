@@ -16,6 +16,7 @@ pub enum Token {
     Semicolon,
     NegationOperator,
     BitwiseComplementOperator,
+    Plus,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -33,6 +34,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let negation_operator_regex = Regex::new(r"^-").unwrap();
     let decrement_operator_regex = Regex::new(r"^--").unwrap();
     let bitwise_complement_operator_regex = Regex::new(r"^~").unwrap();
+    let plus_regex = Regex::new(r"^\+").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -182,6 +184,16 @@ pub fn lex(text: &str) -> Vec<Token> {
             if let Some(_) = res {
                 let token = Token::BitwiseComplementOperator;
                 tokens.push(token);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            let res = plus_regex.find(&line[idx..]);
+            if let Some(_) = res {
+                tokens.push(Token::Plus);
                 idx += 1;
                 if idx == line.len() {
                     traversed_entire_line = true;
@@ -353,6 +365,23 @@ int main() {
             Token::CloseParenthesis,
             Token::Semicolon,
             Token::CloseBrace,
+        ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn plus_character_token_is_created() {
+        let source_code_string = "int main() {return 2+";
+        let expected_tokens = vec![
+            Token::IntKeyword,
+            Token::Identifier("main".to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::NumericConstant(2),
+            Token::Plus,
         ];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
