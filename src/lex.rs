@@ -14,7 +14,7 @@ pub enum Token {
     ReturnKeyword,
     NumericConstant(u8),
     Semicolon,
-    NegationOperator,
+    Minus,
     BitwiseComplementOperator,
     Plus,
     Asterisk,
@@ -34,7 +34,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let numeric_constant_regex = Regex::new(r"^[0-9]+\b").unwrap();
     let semicolon_regex = Regex::new(r"^;").unwrap();
     let empty_line_regex = Regex::new(r"^$").unwrap();
-    let negation_operator_regex = Regex::new(r"^-").unwrap();
+    let minus_regex = Regex::new(r"^-").unwrap();
     let decrement_operator_regex = Regex::new(r"^--").unwrap();
     let bitwise_complement_operator_regex = Regex::new(r"^~").unwrap();
     let plus_regex = Regex::new(r"^\+").unwrap();
@@ -175,9 +175,9 @@ pub fn lex(text: &str) -> Vec<Token> {
                 panic!("Decrement operator is not supported yet");
             }
 
-            let res = negation_operator_regex.find(&line[idx..]);
+            let res = minus_regex.find(&line[idx..]);
             if let Some(_) = res {
-                let token = Token::NegationOperator;
+                let token = Token::Minus;
                 tokens.push(token);
                 idx += 1;
                 if idx == line.len() {
@@ -356,7 +356,7 @@ int main() {
     }
 
     #[test]
-    fn negation_operator_token_is_created() {
+    fn minus_character_token_is_created() {
         let source_code_string = "int main() {return -2;}";
         let expected_tokens = vec![
             Token::IntKeyword,
@@ -365,7 +365,7 @@ int main() {
             Token::CloseParenthesis,
             Token::OpenBrace,
             Token::ReturnKeyword,
-            Token::NegationOperator,
+            Token::Minus,
             Token::NumericConstant(2),
             Token::Semicolon,
             Token::CloseBrace,
@@ -393,7 +393,7 @@ int main() {
             Token::ReturnKeyword,
             Token::BitwiseComplementOperator,
             Token::OpenParenthesis,
-            Token::NegationOperator,
+            Token::Minus,
             Token::NumericConstant(2),
             Token::CloseParenthesis,
             Token::Semicolon,

@@ -37,7 +37,7 @@ pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
 
     match next_token {
         Token::BitwiseComplementOperator => UnaryOperator::BitwiseComplement,
-        Token::NegationOperator => UnaryOperator::Negation,
+        Token::Minus => UnaryOperator::Negation,
         _ => todo!(),
     }
 }
@@ -71,7 +71,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
                 _ => panic!(),
             }
         }
-        Token::BitwiseComplementOperator | Token::NegationOperator => {
+        Token::BitwiseComplementOperator | Token::Minus => {
             let unary_operator_ast_node = parse_unary_operator(tokens);
             let inner_expression_ast_node = parse_expression(tokens);
             Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn parse_expression_containing_negation_operator() {
         let value = 2;
-        let mut tokens = VecDeque::from([Token::NegationOperator, Token::NumericConstant(value)]);
+        let mut tokens = VecDeque::from([Token::Minus, Token::NumericConstant(value)]);
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
@@ -224,7 +224,7 @@ mod tests {
         let value = 2;
         let mut tokens = VecDeque::from([
             Token::OpenParenthesis,
-            Token::NegationOperator,
+            Token::Minus,
             Token::NumericConstant(value),
             Token::CloseParenthesis,
         ]);
@@ -242,7 +242,7 @@ mod tests {
         let value = 2;
         let mut tokens = VecDeque::from([
             Token::OpenParenthesis,
-            Token::NegationOperator,
+            Token::Minus,
             Token::NumericConstant(value),
             Token::CloseBrace,
         ]);
@@ -327,7 +327,7 @@ mod tests {
 
     #[test]
     fn parse_negation_operator() {
-        let mut tokens = VecDeque::from([Token::NegationOperator]);
+        let mut tokens = VecDeque::from([Token::Minus]);
         let expected_ast_node = UnaryOperator::Negation;
         let ast_node = parse_unary_operator(&mut tokens);
         assert_eq!(0, tokens.len());
