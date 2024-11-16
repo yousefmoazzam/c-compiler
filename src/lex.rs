@@ -17,6 +17,7 @@ pub enum Token {
     NegationOperator,
     BitwiseComplementOperator,
     Plus,
+    Asterisk,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -35,6 +36,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let decrement_operator_regex = Regex::new(r"^--").unwrap();
     let bitwise_complement_operator_regex = Regex::new(r"^~").unwrap();
     let plus_regex = Regex::new(r"^\+").unwrap();
+    let asterisk_regex = Regex::new(r"^\*").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -194,6 +196,15 @@ pub fn lex(text: &str) -> Vec<Token> {
             let res = plus_regex.find(&line[idx..]);
             if let Some(_) = res {
                 tokens.push(Token::Plus);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            if let Some(_) = asterisk_regex.find(&line[idx..]) {
+                tokens.push(Token::Asterisk);
                 idx += 1;
                 if idx == line.len() {
                     traversed_entire_line = true;
@@ -382,6 +393,23 @@ int main() {
             Token::ReturnKeyword,
             Token::NumericConstant(2),
             Token::Plus,
+        ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn asterisk_character_token_is_created() {
+        let source_code_string = "int main() {return 2*";
+        let expected_tokens = vec![
+            Token::IntKeyword,
+            Token::Identifier("main".to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::NumericConstant(2),
+            Token::Asterisk,
         ];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
