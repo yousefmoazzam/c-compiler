@@ -19,6 +19,7 @@ pub enum Token {
     Plus,
     Asterisk,
     ForwardSlash,
+    Percent,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -39,6 +40,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let plus_regex = Regex::new(r"^\+").unwrap();
     let asterisk_regex = Regex::new(r"^\*").unwrap();
     let forward_slash_regex = Regex::new(r"^/").unwrap();
+    let percent_regex = Regex::new(r"^%").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -216,6 +218,15 @@ pub fn lex(text: &str) -> Vec<Token> {
 
             if let Some(_) = forward_slash_regex.find(&line[idx..]) {
                 tokens.push(Token::ForwardSlash);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            if let Some(_) = percent_regex.find(&line[idx..]) {
+                tokens.push(Token::Percent);
                 idx += 1;
                 if idx == line.len() {
                     traversed_entire_line = true;
@@ -438,6 +449,23 @@ int main() {
             Token::ReturnKeyword,
             Token::NumericConstant(2),
             Token::ForwardSlash,
+        ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn percent_character_token_is_created() {
+        let source_code_string = "int main() {return 2%";
+        let expected_tokens = vec![
+            Token::IntKeyword,
+            Token::Identifier("main".to_string()),
+            Token::OpenParenthesis,
+            Token::CloseParenthesis,
+            Token::OpenBrace,
+            Token::ReturnKeyword,
+            Token::NumericConstant(2),
+            Token::Percent,
         ];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
