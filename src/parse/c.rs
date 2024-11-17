@@ -10,6 +10,11 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum BinaryOperator {
+    Add,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     NumericConstant(u8),
     Unary(UnaryOperator, Box<Expression>),
@@ -38,6 +43,17 @@ pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
     match next_token {
         Token::Tilde => UnaryOperator::BitwiseComplement,
         Token::Minus => UnaryOperator::Negation,
+        _ => todo!(),
+    }
+}
+
+pub fn parse_binary_operator(tokens: &mut VecDeque<Token>) -> BinaryOperator {
+    let next_token = tokens
+        .pop_front()
+        .expect("Should have non-empty queue of tokens");
+
+    match next_token {
+        Token::Plus => BinaryOperator::Add,
         _ => todo!(),
     }
 }
@@ -331,6 +347,15 @@ mod tests {
         let mut tokens = VecDeque::from([Token::Minus]);
         let expected_ast_node = UnaryOperator::Negation;
         let ast_node = parse_unary_operator(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_addition_operator() {
+        let mut tokens = VecDeque::from([Token::Plus]);
+        let expected_ast_node = BinaryOperator::Add;
+        let ast_node = parse_binary_operator(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
     }
