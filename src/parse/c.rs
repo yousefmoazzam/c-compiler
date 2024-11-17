@@ -18,6 +18,11 @@ pub enum BinaryOperator {
 pub enum Expression {
     NumericConstant(u8),
     Unary(UnaryOperator, Box<Expression>),
+    Binary {
+        op: BinaryOperator,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -116,7 +121,29 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
 }
 
 pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
-    parse_factor(tokens)
+    let left = parse_factor(tokens);
+
+    let next_token = tokens
+        .front()
+        .expect("Should have non-empty queue of tokens");
+
+    if *next_token != Token::Plus {
+        return left;
+    }
+
+    match next_token {
+        Token::Plus => {
+            let op = parse_binary_operator(tokens);
+            let right = parse_factor(tokens);
+            let left = Expression::Binary {
+                op,
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+            return left;
+        }
+        _ => todo!(),
+    }
 }
 
 pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
@@ -356,6 +383,27 @@ mod tests {
         let mut tokens = VecDeque::from([Token::Plus]);
         let expected_ast_node = BinaryOperator::Add;
         let ast_node = parse_binary_operator(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_single_addition_operator_expression() {
+        let left_operand = 1;
+        let right_operand = 2;
+        let mut tokens = VecDeque::from([
+            Token::NumericConstant(left_operand),
+            Token::Plus,
+            Token::NumericConstant(right_operand),
+        ]);
+        let boxed_left = Box::new(Expression::NumericConstant(left_operand));
+        let boxed_right = Box::new(Expression::NumericConstant(right_operand));
+        let expected_ast_node = Expression::Binary {
+            op: BinaryOperator::Add,
+            left: boxed_left,
+            right: boxed_right,
+        };
+        let ast_node = parse_expression(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
     }

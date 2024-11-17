@@ -88,6 +88,7 @@ fn recurse_unary_expression(
             instructions.push(unop_instruction_ast_node);
             dst
         }
+        c::Expression::Binary { .. } => todo!(),
     }
 }
 
