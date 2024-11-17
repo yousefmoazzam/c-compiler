@@ -42,7 +42,7 @@ pub fn parse_unary_operator(tokens: &mut VecDeque<Token>) -> UnaryOperator {
     }
 }
 
-pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
+pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
     // The queue of tokens shouldn't be empty if the queue has been handled correctly by others, so
     // the panic shouldn't occur. Hence, the use of `expect()`.
     let next_token = tokens
@@ -73,7 +73,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
         }
         Token::Tilde | Token::Minus => {
             let unary_operator_ast_node = parse_unary_operator(tokens);
-            let inner_expression_ast_node = parse_expression(tokens);
+            let inner_expression_ast_node = parse_factor(tokens);
             Expression::Unary(unary_operator_ast_node, Box::new(inner_expression_ast_node))
         }
         Token::OpenParenthesis => {
@@ -81,7 +81,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
                 .pop_front()
                 .expect("Already confirmed at least one token in the queue");
 
-            let expression_ast_node = parse_expression(tokens);
+            let expression_ast_node = parse_factor(tokens);
 
             let trailing_token = tokens
                 .pop_front()
@@ -109,7 +109,7 @@ pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
         todo!()
     }
 
-    let expression_ast_node = parse_expression(tokens);
+    let expression_ast_node = parse_factor(tokens);
 
     let third_token = tokens
         .pop_front()
@@ -187,7 +187,7 @@ mod tests {
         let value = 2;
         let mut tokens = VecDeque::from([Token::NumericConstant(value)]);
         let expected_ast_node = Expression::NumericConstant(value);
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_factor(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
     }
@@ -199,7 +199,7 @@ mod tests {
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::BitwiseComplement, boxed_expression_ast_node);
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_factor(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
     }
@@ -211,7 +211,7 @@ mod tests {
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_factor(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
     }
@@ -228,7 +228,7 @@ mod tests {
         let boxed_expression_ast_node = Box::new(Expression::NumericConstant(value));
         let expected_ast_node =
             Expression::Unary(UnaryOperator::Negation, boxed_expression_ast_node);
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_factor(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(ast_node, expected_ast_node);
     }
@@ -243,7 +243,7 @@ mod tests {
             Token::NumericConstant(value),
             Token::CloseBrace,
         ]);
-        _ = parse_expression(&mut tokens);
+        _ = parse_factor(&mut tokens);
     }
 
     #[test]
