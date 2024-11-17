@@ -81,7 +81,7 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
                 .pop_front()
                 .expect("Already confirmed at least one token in the queue");
 
-            let expression_ast_node = parse_factor(tokens);
+            let expression_ast_node = parse_expression(tokens);
 
             let trailing_token = tokens
                 .pop_front()
@@ -97,6 +97,10 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
         }
         _ => todo!(),
     }
+}
+
+pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
+    parse_factor(tokens)
 }
 
 pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
