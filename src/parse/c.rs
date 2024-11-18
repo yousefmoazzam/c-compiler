@@ -127,22 +127,20 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
         .front()
         .expect("Should have non-empty queue of tokens");
 
-    if *next_token != Token::Plus {
-        return left;
-    }
-
-    match next_token {
-        Token::Plus => {
-            let op = parse_binary_operator(tokens);
-            let right = parse_factor(tokens);
-            let left = Expression::Binary {
-                op,
-                left: Box::new(left),
-                right: Box::new(right),
-            };
-            return left;
+    loop {
+        match next_token {
+            Token::Plus => {
+                let op = parse_binary_operator(tokens);
+                let right = parse_factor(tokens);
+                let left = Expression::Binary {
+                    op,
+                    left: Box::new(left),
+                    right: Box::new(right),
+                };
+                break left;
+            }
+            _ => break left,
         }
-        _ => todo!(),
     }
 }
 
