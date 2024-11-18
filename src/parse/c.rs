@@ -121,9 +121,9 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
 }
 
 pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
-    let left = parse_factor(tokens);
+    let mut left = parse_factor(tokens);
 
-    let next_token = tokens
+    let mut next_token = tokens
         .front()
         .expect("Should have non-empty queue of tokens");
 
@@ -132,12 +132,17 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
             Token::Plus => {
                 let op = parse_binary_operator(tokens);
                 let right = parse_factor(tokens);
-                let left = Expression::Binary {
+                left = Expression::Binary {
                     op,
                     left: Box::new(left),
                     right: Box::new(right),
                 };
-                break left;
+
+                if let Some(token) = tokens.front() {
+                    next_token = token;
+                } else {
+                    break left;
+                }
             }
             _ => break left,
         }
@@ -400,6 +405,32 @@ mod tests {
             op: BinaryOperator::Add,
             left: boxed_left,
             right: boxed_right,
+        };
+        let ast_node = parse_expression(&mut tokens);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_two_addition_operator_expression() {
+        let inner_left_operand = 1;
+        let inner_right_operand = 2;
+        let outer_right_operand = 3;
+        let mut tokens = VecDeque::from([
+            Token::NumericConstant(inner_left_operand),
+            Token::Plus,
+            Token::NumericConstant(inner_right_operand),
+            Token::Plus,
+            Token::NumericConstant(outer_right_operand),
+        ]);
+        let expected_ast_node = Expression::Binary {
+            op: BinaryOperator::Add,
+            left: Box::new(Expression::Binary {
+                op: BinaryOperator::Add,
+                left: Box::new(Expression::NumericConstant(inner_left_operand)),
+                right: Box::new(Expression::NumericConstant(inner_right_operand)),
+            }),
+            right: Box::new(Expression::NumericConstant(outer_right_operand)),
         };
         let ast_node = parse_expression(&mut tokens);
         assert_eq!(0, tokens.len());
