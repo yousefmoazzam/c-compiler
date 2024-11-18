@@ -12,6 +12,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
     Add,
+    Subtract,
 }
 
 #[derive(Debug, PartialEq)]
@@ -59,6 +60,7 @@ pub fn parse_binary_operator(tokens: &mut VecDeque<Token>) -> BinaryOperator {
 
     match next_token {
         Token::Plus => BinaryOperator::Add,
+        Token::Minus => BinaryOperator::Subtract,
         _ => todo!(),
     }
 }
@@ -129,7 +131,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
 
     loop {
         match next_token {
-            Token::Plus => {
+            Token::Plus | Token::Minus => {
                 let op = parse_binary_operator(tokens);
                 let right = parse_factor(tokens);
                 left = Expression::Binary {
