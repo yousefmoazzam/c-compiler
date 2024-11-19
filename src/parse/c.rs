@@ -14,6 +14,7 @@ pub enum BinaryOperator {
     Add,
     Subtract,
     Multiply,
+    Divide,
 }
 
 #[derive(Debug, PartialEq)]
@@ -63,6 +64,7 @@ pub fn parse_binary_operator(tokens: &mut VecDeque<Token>) -> BinaryOperator {
         Token::Plus => BinaryOperator::Add,
         Token::Minus => BinaryOperator::Subtract,
         Token::Asterisk => BinaryOperator::Multiply,
+        Token::ForwardSlash => BinaryOperator::Divide,
         _ => todo!(),
     }
 }
@@ -134,7 +136,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>, min_precedence: u8) -> Exp
     };
 
     match next_token {
-        Token::Plus | Token::Minus | Token::Asterisk => {
+        Token::Plus | Token::Minus | Token::Asterisk | Token::ForwardSlash => {
             if get_operator_precedence(next_token) < min_precedence {
                 return left;
             }
@@ -144,7 +146,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>, min_precedence: u8) -> Exp
 
     loop {
         match next_token {
-            Token::Plus | Token::Minus | Token::Asterisk => {
+            Token::Plus | Token::Minus | Token::Asterisk | Token::ForwardSlash => {
                 let op_precedence = get_operator_precedence(next_token);
                 let op = parse_binary_operator(tokens);
                 let right = parse_expression(tokens, op_precedence + 1);
@@ -168,6 +170,7 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>, min_precedence: u8) -> Exp
 fn get_operator_precedence(token: &Token) -> u8 {
     match token {
         Token::Asterisk => 50,
+        Token::ForwardSlash => 50,
         Token::Plus => 45,
         Token::Minus => 45,
         _ => todo!(),
@@ -482,6 +485,25 @@ mod tests {
                 left: Box::new(Expression::NumericConstant(2)),
                 right: Box::new(Expression::NumericConstant(3)),
             }),
+        };
+        let ast_node = parse_expression(&mut tokens, 0);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_expression_with_division_operator() {
+        let left_operand = 1;
+        let right_operand = 2;
+        let mut tokens = VecDeque::from([
+            Token::NumericConstant(left_operand),
+            Token::ForwardSlash,
+            Token::NumericConstant(right_operand),
+        ]);
+        let expected_ast_node = Expression::Binary {
+            op: BinaryOperator::Divide,
+            left: Box::new(Expression::NumericConstant(left_operand)),
+            right: Box::new(Expression::NumericConstant(right_operand)),
         };
         let ast_node = parse_expression(&mut tokens, 0);
         assert_eq!(0, tokens.len());
