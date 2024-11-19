@@ -13,6 +13,7 @@ pub enum UnaryOperator {
 pub enum BinaryOperator {
     Add,
     Subtract,
+    Multiply,
 }
 
 #[derive(Debug, PartialEq)]
@@ -61,6 +62,7 @@ pub fn parse_binary_operator(tokens: &mut VecDeque<Token>) -> BinaryOperator {
     match next_token {
         Token::Plus => BinaryOperator::Add,
         Token::Minus => BinaryOperator::Subtract,
+        Token::Asterisk => BinaryOperator::Multiply,
         _ => todo!(),
     }
 }
@@ -104,7 +106,7 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
                 .pop_front()
                 .expect("Already confirmed at least one token in the queue");
 
-            let expression_ast_node = parse_expression(tokens);
+            let expression_ast_node = parse_expression(tokens, 0);
 
             let trailing_token = tokens
                 .pop_front()
@@ -122,18 +124,30 @@ pub fn parse_factor(tokens: &mut VecDeque<Token>) -> Expression {
     }
 }
 
-pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
+pub fn parse_expression(tokens: &mut VecDeque<Token>, min_precedence: u8) -> Expression {
     let mut left = parse_factor(tokens);
 
-    let mut next_token = tokens
-        .front()
-        .expect("Should have non-empty queue of tokens");
+    let mut next_token = if let Some(token) = tokens.front() {
+        token
+    } else {
+        return left;
+    };
+
+    match next_token {
+        Token::Plus | Token::Minus | Token::Asterisk => {
+            if get_operator_precedence(next_token) < min_precedence {
+                return left;
+            }
+        }
+        _ => return left,
+    }
 
     loop {
         match next_token {
-            Token::Plus | Token::Minus => {
+            Token::Plus | Token::Minus | Token::Asterisk => {
+                let op_precedence = get_operator_precedence(next_token);
                 let op = parse_binary_operator(tokens);
-                let right = parse_factor(tokens);
+                let right = parse_expression(tokens, op_precedence + 1);
                 left = Expression::Binary {
                     op,
                     left: Box::new(left),
@@ -148,6 +162,15 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>) -> Expression {
             }
             _ => break left,
         }
+    }
+}
+
+fn get_operator_precedence(token: &Token) -> u8 {
+    match token {
+        Token::Asterisk => 50,
+        Token::Plus => 45,
+        Token::Minus => 45,
+        _ => todo!(),
     }
 }
 
@@ -408,7 +431,7 @@ mod tests {
             left: boxed_left,
             right: boxed_right,
         };
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_expression(&mut tokens, 0);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
     }
@@ -434,7 +457,33 @@ mod tests {
             }),
             right: Box::new(Expression::NumericConstant(outer_right_operand)),
         };
-        let ast_node = parse_expression(&mut tokens);
+        let ast_node = parse_expression(&mut tokens, 0);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_expression_with_two_different_precedence_binary_operators() {
+        let outer_left_operand = 1;
+        let inner_left_operand = 2;
+        let inner_right_operand = 3;
+        let mut tokens = VecDeque::from([
+            Token::NumericConstant(outer_left_operand),
+            Token::Plus,
+            Token::NumericConstant(inner_left_operand),
+            Token::Asterisk,
+            Token::NumericConstant(inner_right_operand),
+        ]);
+        let expected_ast_node = Expression::Binary {
+            op: BinaryOperator::Add,
+            left: Box::new(Expression::NumericConstant(outer_left_operand)),
+            right: Box::new(Expression::Binary {
+                op: BinaryOperator::Multiply,
+                left: Box::new(Expression::NumericConstant(2)),
+                right: Box::new(Expression::NumericConstant(3)),
+            }),
+        };
+        let ast_node = parse_expression(&mut tokens, 0);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
     }
