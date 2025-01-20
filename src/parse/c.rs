@@ -137,19 +137,13 @@ pub fn parse_expression(tokens: &mut VecDeque<Token>, min_precedence: u8) -> Exp
         return left;
     };
 
-    match next_token {
-        Token::Plus | Token::Minus | Token::Asterisk | Token::ForwardSlash | Token::Percent => {
-            if get_operator_precedence(next_token) < min_precedence {
-                return left;
-            }
-        }
-        _ => return left,
-    }
-
     loop {
         match next_token {
             Token::Plus | Token::Minus | Token::Asterisk | Token::ForwardSlash | Token::Percent => {
                 let op_precedence = get_operator_precedence(next_token);
+                if op_precedence < min_precedence {
+                    return left;
+                }
                 let op = parse_binary_operator(tokens);
                 let right = parse_expression(tokens, op_precedence + 1);
                 left = Expression::Binary {
