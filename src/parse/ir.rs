@@ -34,6 +34,12 @@ pub enum Instruction {
         src: Value,
         dst: Value,
     },
+    Binary {
+        op: BinaryOperator,
+        left: Value,
+        right: Value,
+        dst: Value,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -107,7 +113,21 @@ fn recurse_expression(
             instructions.push(unop_instruction_ast_node);
             dst
         }
-        c::Expression::Binary { .. } => todo!(),
+        c::Expression::Binary { op, left, right } => {
+            let left = recurse_expression(*left, instructions, id);
+            let right = recurse_expression(*right, instructions, id);
+            let dst = make_temporary(id);
+            *id += 1;
+            let binop_ast_node = parse_binary_operator(op);
+            let binop_instruction_ast_node = Instruction::Binary {
+                op: binop_ast_node,
+                left,
+                right,
+                dst: dst.clone(),
+            };
+            instructions.push(binop_instruction_ast_node);
+            dst
+        }
     }
 }
 
@@ -257,6 +277,30 @@ mod tests {
                 dst: Value::Var("tmp1".to_string()),
             },
             Instruction::Return(Value::Var("tmp1".to_string())),
+        ];
+        let ir_ast_nodes = parse_instruction(c_statement_ast_node);
+        assert_eq!(ir_ast_nodes, expected_ir_instruction_ast_nodes);
+    }
+
+    #[test]
+    fn parse_return_statement_containing_expression_with_one_binary_operator_to_ir_instructions() {
+        let left_operand = 1;
+        let right_operand = 2;
+        let c_expression_binary_ast_node = c::Expression::Binary {
+            op: c::BinaryOperator::Add,
+            left: Box::new(c::Expression::NumericConstant(left_operand)),
+            right: Box::new(c::Expression::NumericConstant(right_operand)),
+        };
+        let c_statement_ast_node = c::Statement::Return(c_expression_binary_ast_node);
+        let expected_tmp_var_identifier = "tmp0";
+        let expected_ir_instruction_ast_nodes = vec![
+            Instruction::Binary {
+                op: BinaryOperator::Add,
+                left: Value::Constant(1),
+                right: Value::Constant(2),
+                dst: Value::Var(expected_tmp_var_identifier.to_string()),
+            },
+            Instruction::Return(Value::Var(expected_tmp_var_identifier.to_string())),
         ];
         let ir_ast_nodes = parse_instruction(c_statement_ast_node);
         assert_eq!(ir_ast_nodes, expected_ir_instruction_ast_nodes);

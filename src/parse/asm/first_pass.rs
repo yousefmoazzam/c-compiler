@@ -36,6 +36,7 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
                 Instruction::Unary { op: op, dst: dst },
             ]
         }
+        _ => todo!(),
     }
 }
 
