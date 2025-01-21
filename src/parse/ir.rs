@@ -11,6 +11,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 enum BinaryOperator {
     Add,
+    Subtract,
 }
 
 // TODO: Deriving `Clone` for now to avoid issues with needing to use tmp var AST nodes in
@@ -55,6 +56,7 @@ pub fn parse_unary_operator(node: c::UnaryOperator) -> UnaryOperator {
 fn parse_binary_operator(node: c::BinaryOperator) -> BinaryOperator {
     match node {
         c::BinaryOperator::Add => BinaryOperator::Add,
+        c::BinaryOperator::Subtract => BinaryOperator::Subtract,
         _ => todo!(),
     }
 }
@@ -160,6 +162,14 @@ mod tests {
     fn parse_c_addition_operator_to_ir_binary_operator() {
         let c_ast_node = c::BinaryOperator::Add;
         let expected_ir_ast_node = BinaryOperator::Add;
+        let ir_ast_node = parse_binary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_subtraction_operator_to_ir_binary_operator() {
+        let c_ast_node = c::BinaryOperator::Subtract;
+        let expected_ir_ast_node = BinaryOperator::Subtract;
         let ir_ast_node = parse_binary_operator(c_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
