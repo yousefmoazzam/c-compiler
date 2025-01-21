@@ -79,7 +79,7 @@ pub fn parse_instruction(node: c::Statement) -> Vec<Instruction> {
 
     match node {
         c::Statement::Return(exp) => {
-            let dst = recurse_unary_expression(exp, &mut instructions, &mut identifier_count);
+            let dst = recurse_expression(exp, &mut instructions, &mut identifier_count);
             instructions.push(Instruction::Return(dst));
         }
     }
@@ -87,7 +87,7 @@ pub fn parse_instruction(node: c::Statement) -> Vec<Instruction> {
     instructions
 }
 
-fn recurse_unary_expression(
+fn recurse_expression(
     exp: c::Expression,
     instructions: &mut Vec<Instruction>,
     id: &mut usize,
@@ -95,7 +95,7 @@ fn recurse_unary_expression(
     match exp {
         c::Expression::NumericConstant(_) => parse_value(exp),
         c::Expression::Unary(unop, boxed_inner_exp) => {
-            let src = recurse_unary_expression(*boxed_inner_exp, instructions, id);
+            let src = recurse_expression(*boxed_inner_exp, instructions, id);
             let dst = make_temporary(id);
             *id += 1;
             let unop_ast_node = parse_unary_operator(unop);
