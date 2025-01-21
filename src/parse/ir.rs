@@ -12,6 +12,7 @@ pub enum UnaryOperator {
 enum BinaryOperator {
     Add,
     Subtract,
+    Multiply,
 }
 
 // TODO: Deriving `Clone` for now to avoid issues with needing to use tmp var AST nodes in
@@ -57,6 +58,7 @@ fn parse_binary_operator(node: c::BinaryOperator) -> BinaryOperator {
     match node {
         c::BinaryOperator::Add => BinaryOperator::Add,
         c::BinaryOperator::Subtract => BinaryOperator::Subtract,
+        c::BinaryOperator::Multiply => BinaryOperator::Multiply,
         _ => todo!(),
     }
 }
@@ -170,6 +172,14 @@ mod tests {
     fn parse_c_subtraction_operator_to_ir_binary_operator() {
         let c_ast_node = c::BinaryOperator::Subtract;
         let expected_ir_ast_node = BinaryOperator::Subtract;
+        let ir_ast_node = parse_binary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_multiplication_operator_to_ir_binary_operator() {
+        let c_ast_node = c::BinaryOperator::Multiply;
+        let expected_ir_ast_node = BinaryOperator::Multiply;
         let ir_ast_node = parse_binary_operator(c_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
