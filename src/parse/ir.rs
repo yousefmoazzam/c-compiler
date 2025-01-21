@@ -14,6 +14,7 @@ enum BinaryOperator {
     Subtract,
     Multiply,
     Divide,
+    Modulo,
 }
 
 // TODO: Deriving `Clone` for now to avoid issues with needing to use tmp var AST nodes in
@@ -61,7 +62,7 @@ fn parse_binary_operator(node: c::BinaryOperator) -> BinaryOperator {
         c::BinaryOperator::Subtract => BinaryOperator::Subtract,
         c::BinaryOperator::Multiply => BinaryOperator::Multiply,
         c::BinaryOperator::Divide => BinaryOperator::Divide,
-        _ => todo!(),
+        c::BinaryOperator::Modulo => BinaryOperator::Modulo,
     }
 }
 
@@ -190,6 +191,14 @@ mod tests {
     fn parse_c_division_operator_to_ir_binary_operator() {
         let c_ast_node = c::BinaryOperator::Divide;
         let expected_ir_ast_node = BinaryOperator::Divide;
+        let ir_ast_node = parse_binary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_modulo_operator_to_ir_binary_operator() {
+        let c_ast_node = c::BinaryOperator::Modulo;
+        let expected_ir_ast_node = BinaryOperator::Modulo;
         let ir_ast_node = parse_binary_operator(c_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
