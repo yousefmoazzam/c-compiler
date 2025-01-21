@@ -8,6 +8,11 @@ pub enum UnaryOperator {
     Negation,
 }
 
+#[derive(Debug, PartialEq)]
+enum BinaryOperator {
+    Add,
+}
+
 // TODO: Deriving `Clone` for now to avoid issues with needing to use tmp var AST nodes in
 // multiple places, but this should be revisited to see if shared ownership of tmp var AST nodes is
 // better
@@ -44,6 +49,13 @@ pub fn parse_unary_operator(node: c::UnaryOperator) -> UnaryOperator {
     match node {
         c::UnaryOperator::BitwiseComplement => UnaryOperator::BitwiseComplement,
         c::UnaryOperator::Negation => UnaryOperator::Negation,
+    }
+}
+
+fn parse_binary_operator(node: c::BinaryOperator) -> BinaryOperator {
+    match node {
+        c::BinaryOperator::Add => BinaryOperator::Add,
+        _ => todo!(),
     }
 }
 
@@ -141,6 +153,14 @@ mod tests {
         let c_ast_node = c::UnaryOperator::Negation;
         let expected_ir_ast_node = UnaryOperator::Negation;
         let ir_ast_node = parse_unary_operator(c_ast_node);
+        assert_eq!(ir_ast_node, expected_ir_ast_node);
+    }
+
+    #[test]
+    fn parse_c_addition_operator_to_ir_binary_operator() {
+        let c_ast_node = c::BinaryOperator::Add;
+        let expected_ir_ast_node = BinaryOperator::Add;
+        let ir_ast_node = parse_binary_operator(c_ast_node);
         assert_eq!(ir_ast_node, expected_ir_ast_node);
     }
 
