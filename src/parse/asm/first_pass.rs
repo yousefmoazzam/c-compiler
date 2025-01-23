@@ -15,7 +15,9 @@ fn parse_binary_operator(node: ir::BinaryOperator) -> BinaryOperator {
         ir::BinaryOperator::Add => BinaryOperator::Add,
         ir::BinaryOperator::Subtract => BinaryOperator::Subtract,
         ir::BinaryOperator::Multiply => BinaryOperator::Multiply,
-        _ => todo!(),
+        ir::BinaryOperator::Divide | ir::BinaryOperator::Modulo => {
+            panic!("Unexpected binary operator: {:?}", node)
+        }
     }
 }
 
@@ -137,6 +139,18 @@ mod tests {
         let expected_asm_ast_node = BinaryOperator::Multiply;
         let asm_ast_node = parse_binary_operator(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected binary operator: Divide")]
+    fn panic_if_ir_division_operator_given_to_parse_binary_operator() {
+        parse_binary_operator(ir::BinaryOperator::Divide);
+    }
+
+    #[test]
+    #[should_panic(expected = "Unexpected binary operator: Modulo")]
+    fn panic_if_ir_modulo_operator_given_to_parse_binary_operator() {
+        parse_binary_operator(ir::BinaryOperator::Modulo);
     }
 
     #[test]
