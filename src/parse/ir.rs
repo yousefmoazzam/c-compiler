@@ -9,7 +9,7 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug, PartialEq)]
-enum BinaryOperator {
+pub enum BinaryOperator {
     Add,
     Subtract,
     Multiply,

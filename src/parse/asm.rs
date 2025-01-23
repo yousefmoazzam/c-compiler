@@ -19,6 +19,11 @@ pub enum UnaryOperator {
     Neg,
 }
 
+#[derive(Debug, PartialEq)]
+enum BinaryOperator {
+    Add,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
     Imm(u8),

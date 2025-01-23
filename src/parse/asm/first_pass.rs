@@ -1,5 +1,5 @@
 use crate::parse::asm::{
-    FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg, UnaryOperator,
+    BinaryOperator, FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg, UnaryOperator,
 };
 use crate::parse::ir;
 
@@ -7,6 +7,13 @@ pub fn parse_unary_operator(node: ir::UnaryOperator) -> UnaryOperator {
     match node {
         ir::UnaryOperator::BitwiseComplement => UnaryOperator::Not,
         ir::UnaryOperator::Negation => UnaryOperator::Neg,
+    }
+}
+
+fn parse_binary_operator(node: ir::BinaryOperator) -> BinaryOperator {
+    match node {
+        ir::BinaryOperator::Add => BinaryOperator::Add,
+        _ => todo!(),
     }
 }
 
@@ -103,6 +110,14 @@ mod tests {
         let ir_ast_node = ir::UnaryOperator::Negation;
         let expected_asm_ast_node = UnaryOperator::Neg;
         let asm_ast_node = parse_unary_operator(ir_ast_node);
+        assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    fn parse_ir_addition_operator_to_asm_binary_operator() {
+        let ir_ast_node = ir::BinaryOperator::Add;
+        let expected_asm_ast_node = BinaryOperator::Add;
+        let asm_ast_node = parse_binary_operator(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
 
