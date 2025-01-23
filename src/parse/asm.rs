@@ -22,6 +22,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 enum BinaryOperator {
     Add,
+    Subtract,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -13,6 +13,7 @@ pub fn parse_unary_operator(node: ir::UnaryOperator) -> UnaryOperator {
 fn parse_binary_operator(node: ir::BinaryOperator) -> BinaryOperator {
     match node {
         ir::BinaryOperator::Add => BinaryOperator::Add,
+        ir::BinaryOperator::Subtract => BinaryOperator::Subtract,
         _ => todo!(),
     }
 }
@@ -117,6 +118,14 @@ mod tests {
     fn parse_ir_addition_operator_to_asm_binary_operator() {
         let ir_ast_node = ir::BinaryOperator::Add;
         let expected_asm_ast_node = BinaryOperator::Add;
+        let asm_ast_node = parse_binary_operator(ir_ast_node);
+        assert_eq!(asm_ast_node, expected_asm_ast_node);
+    }
+
+    #[test]
+    fn parse_ir_subtraction_operator_to_asm_binary_operator() {
+        let ir_ast_node = ir::BinaryOperator::Subtract;
+        let expected_asm_ast_node = BinaryOperator::Subtract;
         let asm_ast_node = parse_binary_operator(ir_ast_node);
         assert_eq!(asm_ast_node, expected_asm_ast_node);
     }
