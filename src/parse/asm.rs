@@ -36,10 +36,21 @@ pub enum Operand {
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
-    Mov { src: Operand, dst: Operand },
+    Mov {
+        src: Operand,
+        dst: Operand,
+    },
     Ret,
-    Unary { op: UnaryOperator, dst: Operand },
+    Unary {
+        op: UnaryOperator,
+        dst: Operand,
+    },
     AllocateStack(u8),
+    Binary {
+        op: BinaryOperator,
+        src: Operand,
+        dst: Operand,
+    },
 }
 
 #[derive(Debug, PartialEq)]

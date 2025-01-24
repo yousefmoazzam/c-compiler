@@ -54,6 +54,7 @@ pub fn emit_instruction(node: Instruction) -> Vec<String> {
             let dst_string = emit_operand(dst);
             lines.push(format!("    {} {}", op_string, dst_string));
         }
+        _ => todo!(),
     }
 
     lines

@@ -47,7 +47,28 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
                 Instruction::Unary { op: op, dst: dst },
             ]
         }
-        _ => todo!(),
+        ir::Instruction::Binary {
+            op,
+            left,
+            right,
+            dst,
+        } => {
+            let op = parse_binary_operator(op);
+            let left = parse_operand(left);
+            let right = parse_operand(right);
+            let dst = parse_operand(dst);
+            vec![
+                Instruction::Mov {
+                    src: left,
+                    dst: dst.clone(),
+                },
+                Instruction::Binary {
+                    op,
+                    src: right,
+                    dst,
+                },
+            ]
+        }
     }
 }
 
@@ -198,6 +219,35 @@ mod tests {
         assert_eq!(
             asm_instruction_ast_nodes,
             expected_asm_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn parse_ir_addition_binary_operator_instruction_to_asm_instructions() {
+        let left = 1;
+        let right = 2;
+        let tmp_var_identifier = "tmp0";
+        let ir_instruction_ast_node = ir::Instruction::Binary {
+            op: ir::BinaryOperator::Add,
+            left: ir::Value::Constant(left),
+            right: ir::Value::Constant(right),
+            dst: ir::Value::Var(tmp_var_identifier.to_string()),
+        };
+        let expected_asm_ast_instruction_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(left),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Add,
+                src: Operand::Imm(right),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
+            },
+        ];
+        let asm_instruction_ast_nodes = parse_instructions(ir_instruction_ast_node);
+        assert_eq!(
+            asm_instruction_ast_nodes,
+            expected_asm_ast_instruction_nodes
         );
     }
 

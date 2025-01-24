@@ -37,6 +37,7 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
                 panic!("Stack allocation instruction shouldn't be present in second pass")
             }
             Instruction::Ret => instructions.push(instruction),
+            _ => todo!(),
         }
     }
 
