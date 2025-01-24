@@ -197,22 +197,19 @@ mod tests {
     fn parse_ir_unary_operator_instruction_to_asm_instruction() {
         let value = 2;
         let tmp_var_identifier = "tmp0";
-        let ir_constant_ast_node = ir::Value::Constant(value);
-        let ir_tmp_var_ast_node = ir::Value::Var(tmp_var_identifier.to_string());
         let ir_instruction_ast_node = ir::Instruction::Unary {
             op: ir::UnaryOperator::Negation,
-            src: ir_constant_ast_node,
-            dst: ir_tmp_var_ast_node,
+            src: ir::Value::Constant(value),
+            dst: ir::Value::Var(tmp_var_identifier.to_string()),
         };
-        let asm_instructions_same_dst = Operand::PseudoRegister(tmp_var_identifier.to_string());
         let expected_asm_instruction_ast_nodes = vec![
             Instruction::Mov {
                 src: Operand::Imm(value),
-                dst: asm_instructions_same_dst.clone(),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
             },
             Instruction::Unary {
                 op: UnaryOperator::Neg,
-                dst: asm_instructions_same_dst,
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
             },
         ];
         let asm_instruction_ast_nodes = parse_instructions(ir_instruction_ast_node);
