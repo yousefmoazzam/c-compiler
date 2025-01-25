@@ -51,6 +51,9 @@ pub enum Instruction {
         src: Operand,
         dst: Operand,
     },
+    /// Sign-extend value in register EAX into register EDX
+    Cdq,
+    Idiv(Operand),
 }
 
 #[derive(Debug, PartialEq)]
