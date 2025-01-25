@@ -17,6 +17,7 @@ pub fn emit_operand(node: Operand) -> String {
         Operand::Register(reg) => match reg {
             Reg::AX => "%eax".to_string(),
             Reg::R10D => "%r10d".to_string(),
+            _ => todo!(),
         },
         Operand::Stack(offset) => format!("{}(%rbp)", offset),
         Operand::PseudoRegister(_) => {

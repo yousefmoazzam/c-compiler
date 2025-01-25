@@ -73,7 +73,12 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
                         },
                     ]
                 }
-                ir::BinaryOperator::Divide => {
+                ir::BinaryOperator::Divide | ir::BinaryOperator::Modulo => {
+                    let result_reg = if op == ir::BinaryOperator::Divide {
+                        Reg::AX
+                    } else {
+                        Reg::DX
+                    };
                     vec![
                         Instruction::Mov {
                             src: left,
@@ -82,12 +87,11 @@ pub fn parse_instructions(node: ir::Instruction) -> Vec<Instruction> {
                         Instruction::Cdq,
                         Instruction::Idiv(right),
                         Instruction::Mov {
-                            src: Operand::Register(Reg::AX),
+                            src: Operand::Register(result_reg),
                             dst,
                         },
                     ]
                 }
-                _ => todo!(),
             }
         }
     }
@@ -299,6 +303,35 @@ mod tests {
         );
     }
 
+    #[test]
+    fn parse_ir_modulo_binary_operator_instruction_to_asm_instructions() {
+        let dividend = 9; // value being divided
+        let divisor = 2; // value to divide by
+        let tmp_var_identifier = "tmp0";
+        let ir_instruction_ast_node = ir::Instruction::Binary {
+            op: ir::BinaryOperator::Modulo,
+            left: ir::Value::Constant(dividend),
+            right: ir::Value::Constant(divisor),
+            dst: ir::Value::Var(tmp_var_identifier.to_string()),
+        };
+        let expected_asm_ast_instruction_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(dividend),
+                dst: Operand::Register(Reg::AX),
+            },
+            Instruction::Cdq,
+            Instruction::Idiv(Operand::Imm(divisor)),
+            Instruction::Mov {
+                src: Operand::Register(Reg::DX),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
+            },
+        ];
+        let asm_instruction_ast_nodes = parse_instructions(ir_instruction_ast_node);
+        assert_eq!(
+            asm_instruction_ast_nodes,
+            expected_asm_ast_instruction_nodes
+        );
+    }
     #[test]
     fn parse_ir_function_defn_to_asm_function_defn() {
         let value = 2;

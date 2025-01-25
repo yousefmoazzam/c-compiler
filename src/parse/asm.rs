@@ -10,6 +10,7 @@ const TMP_VAR_BYTE_LEN: usize = 4;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Reg {
     AX,
+    DX,
     R10D,
 }
 
