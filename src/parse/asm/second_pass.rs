@@ -42,6 +42,10 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
                 let dst = parse_operand(dst, &mut map, stack_offset);
                 instructions.push(Instruction::Binary { op, src, dst });
             }
+            Instruction::Idiv(operand) => {
+                let operand = parse_operand(operand, &mut map, stack_offset);
+                instructions.push(Instruction::Idiv(operand));
+            }
             _ => todo!(),
         }
     }
@@ -179,6 +183,22 @@ mod tests {
                 dst: expected_asm_instructions_same_stack_addr_dst,
             },
         ];
+        let mut stack_offset = 0;
+        let output_asm_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn pseudo_register_in_division_instruction_transformed_to_stack_address() {
+        let input_asm_instruction_ast_nodes = vec![Instruction::Idiv(Operand::PseudoRegister(
+            "tmp0".to_string(),
+        ))];
+        let expected_asm_instruction_ast_nodes =
+            vec![Instruction::Idiv(Operand::Stack(-(TMP_VAR_BYTE_LEN as i8)))];
         let mut stack_offset = 0;
         let output_asm_instruction_ast_nodes =
             parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
