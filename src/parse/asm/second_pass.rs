@@ -37,6 +37,11 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
                 panic!("Stack allocation instruction shouldn't be present in second pass")
             }
             Instruction::Ret => instructions.push(instruction),
+            Instruction::Binary { op, src, dst } => {
+                let src = parse_operand(src, &mut map, stack_offset);
+                let dst = parse_operand(dst, &mut map, stack_offset);
+                instructions.push(Instruction::Binary { op, src, dst });
+            }
             _ => todo!(),
         }
     }
@@ -71,7 +76,7 @@ pub fn parse_program_definition(node: ProgramDefinition) -> (ProgramDefinition, 
 #[cfg(test)]
 mod tests {
 
-    use crate::parse::asm::UnaryOperator;
+    use crate::parse::asm::{BinaryOperator, UnaryOperator};
 
     use super::*;
 
@@ -128,6 +133,49 @@ mod tests {
             },
             Instruction::Unary {
                 op: UnaryOperator::Neg,
+                dst: expected_asm_instructions_same_stack_addr_dst,
+            },
+        ];
+        let mut stack_offset = 0;
+        let output_asm_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn pseudo_register_in_addition_binary_operator_instruction_transformed_to_stack_address() {
+        // The move instruction isn't strictly needed for the purpose of this test. However, the
+        // move instruction is the only part that refers to the left operand of the binary
+        // operator. Omitting the move instruction would imply that the left operand is omitted as
+        // well, but it looks confusing to have a test involving a binary operator application that
+        // omits the left operand. So, the move instruction has been left in for the moment.
+        let left = 1;
+        let right = 2;
+        let tmp_var_identifier = "tmp0";
+        let input_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(left),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Add,
+                src: Operand::Imm(right),
+                dst: Operand::PseudoRegister(tmp_var_identifier.to_string()),
+            },
+        ];
+        let expected_asm_instructions_same_stack_addr_dst =
+            Operand::Stack(-(TMP_VAR_BYTE_LEN as i8));
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(left),
+                dst: expected_asm_instructions_same_stack_addr_dst.clone(),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Add,
+                src: Operand::Imm(right),
                 dst: expected_asm_instructions_same_stack_addr_dst,
             },
         ];
