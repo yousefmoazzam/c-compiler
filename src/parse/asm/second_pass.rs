@@ -46,7 +46,7 @@ pub fn parse_instructions(nodes: Vec<Instruction>, stack_offset: &mut i8) -> Vec
                 let operand = parse_operand(operand, &mut map, stack_offset);
                 instructions.push(Instruction::Idiv(operand));
             }
-            _ => todo!(),
+            Instruction::Cdq => instructions.push(instruction),
         }
     }
 
@@ -224,6 +224,15 @@ mod tests {
         let output_asm_instruction_ast_nodes =
             parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
         assert_eq!(vec![Instruction::Ret], output_asm_instruction_ast_nodes);
+    }
+
+    #[test]
+    fn dont_transform_cdq_instruction() {
+        let mut stack_offset = 0;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Cdq];
+        let output_asm_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes, &mut stack_offset);
+        assert_eq!(vec![Instruction::Cdq], output_asm_instruction_ast_nodes);
     }
 
     #[test]
