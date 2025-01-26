@@ -59,7 +59,7 @@ pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
                 transformed_instructions.append(&mut intermediate_register_instructions);
             }
             Instruction::Binary {
-                op: op @ BinaryOperator::Add,
+                op: op @ (BinaryOperator::Add | BinaryOperator::Subtract),
                 src: src @ Operand::Stack(_),
                 dst: dst @ Operand::Stack(_),
             } => {
@@ -244,6 +244,35 @@ mod tests {
             },
             Instruction::Binary {
                 op: BinaryOperator::Add,
+                src: Operand::Register(Reg::R10D),
+                dst: Operand::Stack(second_operand_offset),
+            },
+        ];
+        let output_asm_ast_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_ast_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn rewrite_subtraction_instruction_with_both_operands_memory_addresses_to_move_to_scratch_register(
+    ) {
+        let first_operand_offset = -4;
+        let second_operand_offset = -8;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Binary {
+            op: BinaryOperator::Subtract,
+            src: Operand::Stack(first_operand_offset),
+            dst: Operand::Stack(second_operand_offset),
+        }];
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Stack(first_operand_offset),
+                dst: Operand::Register(Reg::R10D),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Subtract,
                 src: Operand::Register(Reg::R10D),
                 dst: Operand::Stack(second_operand_offset),
             },
