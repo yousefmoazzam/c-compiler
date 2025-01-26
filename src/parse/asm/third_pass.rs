@@ -46,6 +46,16 @@ pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
                 ];
                 transformed_instructions.append(&mut intermediate_register_instructions);
             }
+            Instruction::Idiv(imm @ Operand::Imm(_)) => {
+                let mut intermediate_register_instructions = vec![
+                    Instruction::Mov {
+                        src: imm,
+                        dst: Operand::Register(Reg::R10D),
+                    },
+                    Instruction::Idiv(Operand::Register(Reg::R10D)),
+                ];
+                transformed_instructions.append(&mut intermediate_register_instructions);
+            }
             _ => transformed_instructions.push(node),
         }
     }
@@ -170,6 +180,25 @@ mod tests {
             Instruction::Ret,
         ];
 
+        let output_asm_ast_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_ast_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn rewrite_division_instruction_with_immediate_operand_to_move_to_scratch_register() {
+        let divisor = 2;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Idiv(Operand::Imm(divisor))];
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Imm(divisor),
+                dst: Operand::Register(Reg::R10D),
+            },
+            Instruction::Idiv(Operand::Register(Reg::R10D)),
+        ];
         let output_asm_ast_instruction_ast_nodes =
             parse_instructions(input_asm_instruction_ast_nodes);
         assert_eq!(
