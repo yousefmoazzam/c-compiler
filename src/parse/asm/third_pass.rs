@@ -1,4 +1,6 @@
-use crate::parse::asm::{FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg};
+use crate::parse::asm::{
+    BinaryOperator, FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg,
+};
 
 pub fn parse_program_definition(node: ProgramDefinition, stack_offset: i8) -> ProgramDefinition {
     match node {
@@ -53,6 +55,24 @@ pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
                         dst: Operand::Register(Reg::R10D),
                     },
                     Instruction::Idiv(Operand::Register(Reg::R10D)),
+                ];
+                transformed_instructions.append(&mut intermediate_register_instructions);
+            }
+            Instruction::Binary {
+                op: op @ BinaryOperator::Add,
+                src: src @ Operand::Stack(_),
+                dst: dst @ Operand::Stack(_),
+            } => {
+                let mut intermediate_register_instructions = vec![
+                    Instruction::Mov {
+                        src,
+                        dst: Operand::Register(Reg::R10D),
+                    },
+                    Instruction::Binary {
+                        op,
+                        src: Operand::Register(Reg::R10D),
+                        dst,
+                    },
                 ];
                 transformed_instructions.append(&mut intermediate_register_instructions);
             }
@@ -198,6 +218,35 @@ mod tests {
                 dst: Operand::Register(Reg::R10D),
             },
             Instruction::Idiv(Operand::Register(Reg::R10D)),
+        ];
+        let output_asm_ast_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_ast_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn rewrite_addition_instruction_with_both_operands_memory_addresses_to_move_to_scratch_register(
+    ) {
+        let first_operand_offset = -4;
+        let second_operand_offset = -8;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Binary {
+            op: BinaryOperator::Add,
+            src: Operand::Stack(first_operand_offset),
+            dst: Operand::Stack(second_operand_offset),
+        }];
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Stack(first_operand_offset),
+                dst: Operand::Register(Reg::R10D),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Add,
+                src: Operand::Register(Reg::R10D),
+                dst: Operand::Stack(second_operand_offset),
+            },
         ];
         let output_asm_ast_instruction_ast_nodes =
             parse_instructions(input_asm_instruction_ast_nodes);
