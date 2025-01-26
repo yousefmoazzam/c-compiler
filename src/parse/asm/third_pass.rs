@@ -76,6 +76,28 @@ pub fn parse_instructions(nodes: Vec<Instruction>) -> Vec<Instruction> {
                 ];
                 transformed_instructions.append(&mut intermediate_register_instructions);
             }
+            Instruction::Binary {
+                op: op @ BinaryOperator::Multiply,
+                src,
+                dst: dst @ Operand::Stack(_),
+            } => {
+                let mut intermediate_register_instructions = vec![
+                    Instruction::Mov {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::R11D),
+                    },
+                    Instruction::Binary {
+                        op,
+                        src,
+                        dst: Operand::Register(Reg::R11D),
+                    },
+                    Instruction::Mov {
+                        src: Operand::Register(Reg::R11D),
+                        dst,
+                    },
+                ];
+                transformed_instructions.append(&mut intermediate_register_instructions);
+            }
             _ => transformed_instructions.push(node),
         }
     }
@@ -275,6 +297,38 @@ mod tests {
                 op: BinaryOperator::Subtract,
                 src: Operand::Register(Reg::R10D),
                 dst: Operand::Stack(second_operand_offset),
+            },
+        ];
+        let output_asm_ast_instruction_ast_nodes =
+            parse_instructions(input_asm_instruction_ast_nodes);
+        assert_eq!(
+            expected_asm_instruction_ast_nodes,
+            output_asm_ast_instruction_ast_nodes
+        );
+    }
+
+    #[test]
+    fn rewrite_multiplication_instruction_with_dst_memory_address_to_move_to_scratch_register() {
+        let first_operand = 3;
+        let dst_memory_addr_offset = -4;
+        let input_asm_instruction_ast_nodes = vec![Instruction::Binary {
+            op: BinaryOperator::Multiply,
+            src: Operand::Imm(first_operand),
+            dst: Operand::Stack(dst_memory_addr_offset),
+        }];
+        let expected_asm_instruction_ast_nodes = vec![
+            Instruction::Mov {
+                src: Operand::Stack(dst_memory_addr_offset),
+                dst: Operand::Register(Reg::R11D),
+            },
+            Instruction::Binary {
+                op: BinaryOperator::Multiply,
+                src: Operand::Imm(first_operand),
+                dst: Operand::Register(Reg::R11D),
+            },
+            Instruction::Mov {
+                src: Operand::Register(Reg::R11D),
+                dst: Operand::Stack(dst_memory_addr_offset),
             },
         ];
         let output_asm_ast_instruction_ast_nodes =

@@ -12,6 +12,7 @@ pub enum Reg {
     AX,
     DX,
     R10D,
+    R11D,
 }
 
 #[derive(Debug, PartialEq)]
