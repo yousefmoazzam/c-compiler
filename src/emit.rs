@@ -18,7 +18,7 @@ pub fn emit_operand(node: Operand) -> String {
             Reg::AX => "%eax".to_string(),
             Reg::DX => "%edx".to_string(),
             Reg::R10D => "%r10d".to_string(),
-            _ => todo!(),
+            Reg::R11D => "%r11d".to_string(),
         },
         Operand::Stack(offset) => format!("{}(%rbp)", offset),
         Operand::PseudoRegister(_) => {
@@ -120,6 +120,14 @@ mod tests {
         let ast_node = Operand::Register(Reg::R10D);
         let asm_code = emit_operand(ast_node);
         let expected_asm_code = "%r10d";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_register_r11d_operand() {
+        let ast_node = Operand::Register(Reg::R11D);
+        let asm_code = emit_operand(ast_node);
+        let expected_asm_code = "%r11d";
         assert_eq!(asm_code, expected_asm_code);
     }
 
