@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use crate::parse::asm::{
-    FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg, UnaryOperator,
+    BinaryOperator, FunctionDefinition, Instruction, Operand, ProgramDefinition, Reg, UnaryOperator,
 };
 
 pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
@@ -31,6 +31,13 @@ pub fn emit_unary_operator(node: UnaryOperator) -> String {
     match node {
         UnaryOperator::Neg => "negl".to_string(),
         UnaryOperator::Not => "notl".to_string(),
+    }
+}
+
+fn emit_binary_operator(node: BinaryOperator) -> String {
+    match node {
+        BinaryOperator::Add => "addl".to_string(),
+        _ => todo!(),
     }
 }
 
@@ -160,6 +167,14 @@ mod tests {
         let ast_node = UnaryOperator::Not;
         let asm_code = emit_unary_operator(ast_node);
         let expected_asm_code = "notl";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_add_binary_operator() {
+        let ast_node = BinaryOperator::Add;
+        let asm_code = emit_binary_operator(ast_node);
+        let expected_asm_code = "addl";
         assert_eq!(asm_code, expected_asm_code);
     }
 
