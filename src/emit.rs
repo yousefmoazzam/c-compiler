@@ -38,7 +38,7 @@ fn emit_binary_operator(node: BinaryOperator) -> String {
     match node {
         BinaryOperator::Add => "addl".to_string(),
         BinaryOperator::Subtract => "subl".to_string(),
-        _ => todo!(),
+        BinaryOperator::Multiply => "imull".to_string(),
     }
 }
 
@@ -184,6 +184,14 @@ mod tests {
         let ast_node = BinaryOperator::Subtract;
         let asm_code = emit_binary_operator(ast_node);
         let expected_asm_code = "subl";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_multiply_binary_operator() {
+        let ast_node = BinaryOperator::Multiply;
+        let asm_code = emit_binary_operator(ast_node);
+        let expected_asm_code = "imull";
         assert_eq!(asm_code, expected_asm_code);
     }
 
