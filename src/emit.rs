@@ -37,6 +37,7 @@ pub fn emit_unary_operator(node: UnaryOperator) -> String {
 fn emit_binary_operator(node: BinaryOperator) -> String {
     match node {
         BinaryOperator::Add => "addl".to_string(),
+        BinaryOperator::Subtract => "subl".to_string(),
         _ => todo!(),
     }
 }
@@ -175,6 +176,14 @@ mod tests {
         let ast_node = BinaryOperator::Add;
         let asm_code = emit_binary_operator(ast_node);
         let expected_asm_code = "addl";
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_subtract_binary_operator() {
+        let ast_node = BinaryOperator::Subtract;
+        let asm_code = emit_binary_operator(ast_node);
+        let expected_asm_code = "subl";
         assert_eq!(asm_code, expected_asm_code);
     }
 
