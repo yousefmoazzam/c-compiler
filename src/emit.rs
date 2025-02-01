@@ -69,7 +69,12 @@ pub fn emit_instruction(node: Instruction) -> Vec<String> {
             let operand = emit_operand(operand);
             lines.push(format!("    idivl {}", operand));
         }
-        _ => todo!(),
+        Instruction::Binary { op, src, dst } => {
+            let op = emit_binary_operator(op);
+            let src = emit_operand(src);
+            let dst = emit_operand(dst);
+            lines.push(format!("    {} {}, {}", op, src, dst));
+        }
     }
 
     lines
@@ -257,6 +262,19 @@ mod tests {
         let ast_node = Instruction::Idiv(Operand::Register(Reg::R10D));
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = vec!["    idivl %r10d"];
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_binary_instruction() {
+        let src = 2;
+        let ast_node = Instruction::Binary {
+            op: BinaryOperator::Add,
+            src: Operand::Imm(src),
+            dst: Operand::Register(Reg::AX),
+        };
+        let asm_code = emit_instruction(ast_node);
+        let expected_asm_code = vec![format!("    addl ${}, %eax", src)];
         assert_eq!(asm_code, expected_asm_code);
     }
 
