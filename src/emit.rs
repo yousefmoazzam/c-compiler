@@ -64,6 +64,7 @@ pub fn emit_instruction(node: Instruction) -> Vec<String> {
             let dst_string = emit_operand(dst);
             lines.push(format!("    {} {}", op_string, dst_string));
         }
+        Instruction::Cdq => lines.push("    cdq".to_string()),
         _ => todo!(),
     }
 
@@ -237,6 +238,13 @@ mod tests {
         };
         let asm_code = emit_instruction(ast_node);
         let expected_asm_code = vec![format!("    negl ${}", value)];
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_cdq_instruction() {
+        let asm_code = emit_instruction(Instruction::Cdq);
+        let expected_asm_code = vec!["    cdq"];
         assert_eq!(asm_code, expected_asm_code);
     }
 
