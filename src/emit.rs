@@ -65,6 +65,10 @@ pub fn emit_instruction(node: Instruction) -> Vec<String> {
             lines.push(format!("    {} {}", op_string, dst_string));
         }
         Instruction::Cdq => lines.push("    cdq".to_string()),
+        Instruction::Idiv(operand) => {
+            let operand = emit_operand(operand);
+            lines.push(format!("    idivl {}", operand));
+        }
         _ => todo!(),
     }
 
@@ -245,6 +249,14 @@ mod tests {
     fn emit_cdq_instruction() {
         let asm_code = emit_instruction(Instruction::Cdq);
         let expected_asm_code = vec!["    cdq"];
+        assert_eq!(asm_code, expected_asm_code);
+    }
+
+    #[test]
+    fn emit_idiv_instruction() {
+        let ast_node = Instruction::Idiv(Operand::Register(Reg::R10D));
+        let asm_code = emit_instruction(ast_node);
+        let expected_asm_code = vec!["    idivl %r10d"];
         assert_eq!(asm_code, expected_asm_code);
     }
 
