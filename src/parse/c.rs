@@ -184,7 +184,7 @@ pub fn parse_statement(tokens: &mut VecDeque<Token>) -> Statement {
         todo!()
     }
 
-    let expression_ast_node = parse_factor(tokens);
+    let expression_ast_node = parse_expression(tokens, 0);
 
     let third_token = tokens
         .pop_front()
