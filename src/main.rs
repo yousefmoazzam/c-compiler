@@ -1,8 +1,4 @@
-use std::{
-    collections::VecDeque,
-    env::args,
-    path::{Path, PathBuf},
-};
+use std::{collections::VecDeque, env::args, path::Path};
 
 use c_compiler::{emit, lex, parse};
 
@@ -15,7 +11,10 @@ fn main() {
     let asm_file_stem = input_filepath
         .file_stem()
         .expect("Expected filename for input C source file");
-    let mut output_filepath = PathBuf::new();
+    let mut output_filepath = input_filepath
+        .parent()
+        .expect("Expected input C source file to have parent dir")
+        .to_path_buf();
     output_filepath.push(asm_file_stem);
     output_filepath.set_extension(ASM_FILE_EXTENSION);
 
