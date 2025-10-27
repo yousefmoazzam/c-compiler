@@ -5,7 +5,9 @@ use crate::parse::asm::{
 };
 
 pub fn emit(output: &Path, node: ProgramDefinition) -> std::io::Result<()> {
-    let lines = emit_program_definition(node);
+    let mut lines = emit_program_definition(node);
+    let len = lines.len();
+    lines[len - 1].push('\n');
     let joined_lines = lines.join("\n");
     std::fs::write(output, joined_lines).expect("Unable to write assembly code to file");
     Ok(())
