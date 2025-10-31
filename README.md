@@ -29,6 +29,29 @@ main:
 The output file stem (filename without extension) will be the same as the input
 file. Ie, `test.c` would be compiled to `test.s`.
 
+# Generating an executable
+
+A small compiler driver binary crate is available that runs the `gcc` preprocessor, the
+compiler binary crate, and the `gcc` assembler and linker, to produce an executable.
+
+Again, assuming a C source code file `prog.c`, this can be run as follows:
+```
+> cat prog.c
+int main() {
+   return 2;
+}
+> cargo run --bin compiler-driver prog.c
+   Compiling c_compiler v0.0.0 (/home/dev/code)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.19s
+     Running `target/debug/compiler-driver prog.c`
+Preprocessed output: "prog.i"
+Compiled output: "prog.s"
+Executable output: "prog.out"
+> ./prog.out
+> echo $?
+2
+```
+
 # What is supported
 
 ## Target architecture
