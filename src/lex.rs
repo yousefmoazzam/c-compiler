@@ -24,6 +24,7 @@ pub enum Token {
     DoubleRightAngleBracket,
     Ampersand,
     Pipe,
+    Caret,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -49,6 +50,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let double_right_angle_bracket_regex = Regex::new(r"^>>").unwrap();
     let ampersand_regex = Regex::new(r"^&").unwrap();
     let pipe_regex = Regex::new(r"^\|").unwrap();
+    let caret_regex = Regex::new(r"^\^").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -274,6 +276,15 @@ pub fn lex(text: &str) -> Vec<Token> {
 
             if pipe_regex.find(&line[idx..]).is_some() {
                 tokens.push(Token::Pipe);
+                idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                    continue;
+                }
+            }
+
+            if caret_regex.find(&line[idx..]).is_some() {
+                tokens.push(Token::Caret);
                 idx += 1;
                 if idx == line.len() {
                     traversed_entire_line = true;
@@ -542,5 +553,10 @@ int main() {
     #[test]
     fn pipe_token_is_created() {
         assert_eq!(lex("|"), vec![Token::Pipe]);
+    }
+
+    #[test]
+    fn caret_token_is_created() {
+        assert_eq!(lex("^"), vec![Token::Caret]);
     }
 }
