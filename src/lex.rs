@@ -21,6 +21,7 @@ pub enum Token {
     ForwardSlash,
     Percent,
     DoubleLeftAngleBracket,
+    DoubleRightAngleBracket,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -43,6 +44,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let forward_slash_regex = Regex::new(r"^/").unwrap();
     let percent_regex = Regex::new(r"^%").unwrap();
     let double_left_angle_bracket_regex = Regex::new(r"^<<").unwrap();
+    let double_right_angle_bracket_regex = Regex::new(r"^>>").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -243,6 +245,18 @@ pub fn lex(text: &str) -> Vec<Token> {
                     traversed_entire_line = true;
                 }
                 continue;
+            }
+
+            if double_right_angle_bracket_regex
+                .find(&line[idx..])
+                .is_some()
+            {
+                tokens.push(Token::DoubleRightAngleBracket);
+                idx += 2;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                    continue;
+                }
             }
 
             // No match was found, so the string contains either:
@@ -486,6 +500,14 @@ int main() {
     fn double_left_angle_bracket_token_is_created() {
         let source_code_string = "<<";
         let expected_tokens = vec![Token::DoubleLeftAngleBracket];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn double_right_angle_bracket_token_is_created() {
+        let source_code_string = ">>";
+        let expected_tokens = vec![Token::DoubleRightAngleBracket];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
     }
