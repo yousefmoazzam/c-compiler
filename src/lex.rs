@@ -20,6 +20,7 @@ pub enum Token {
     Asterisk,
     ForwardSlash,
     Percent,
+    DoubleLeftAngleBracket,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -41,6 +42,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let asterisk_regex = Regex::new(r"^\*").unwrap();
     let forward_slash_regex = Regex::new(r"^/").unwrap();
     let percent_regex = Regex::new(r"^%").unwrap();
+    let double_left_angle_bracket_regex = Regex::new(r"^<<").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -228,6 +230,15 @@ pub fn lex(text: &str) -> Vec<Token> {
             if let Some(_) = percent_regex.find(&line[idx..]) {
                 tokens.push(Token::Percent);
                 idx += 1;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                }
+                continue;
+            }
+
+            if double_left_angle_bracket_regex.find(&line[idx..]).is_some() {
+                tokens.push(Token::DoubleLeftAngleBracket);
+                idx += 2;
                 if idx == line.len() {
                     traversed_entire_line = true;
                 }
@@ -467,6 +478,14 @@ int main() {
             Token::NumericConstant(2),
             Token::Percent,
         ];
+        let tokens = lex(source_code_string);
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn double_left_angle_bracket_token_is_created() {
+        let source_code_string = "<<";
+        let expected_tokens = vec![Token::DoubleLeftAngleBracket];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
     }
