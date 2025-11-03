@@ -22,6 +22,7 @@ pub enum Token {
     Percent,
     DoubleLeftAngleBracket,
     DoubleRightAngleBracket,
+    Ampersand,
 }
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -45,6 +46,7 @@ pub fn lex(text: &str) -> Vec<Token> {
     let percent_regex = Regex::new(r"^%").unwrap();
     let double_left_angle_bracket_regex = Regex::new(r"^<<").unwrap();
     let double_right_angle_bracket_regex = Regex::new(r"^>>").unwrap();
+    let ampersand_regex = Regex::new(r"^&").unwrap();
 
     let mut tokens: Vec<Token> = vec![];
 
@@ -253,6 +255,15 @@ pub fn lex(text: &str) -> Vec<Token> {
             {
                 tokens.push(Token::DoubleRightAngleBracket);
                 idx += 2;
+                if idx == line.len() {
+                    traversed_entire_line = true;
+                    continue;
+                }
+            }
+
+            if ampersand_regex.find(&line[idx..]).is_some() {
+                tokens.push(Token::Ampersand);
+                idx += 1;
                 if idx == line.len() {
                     traversed_entire_line = true;
                     continue;
@@ -510,5 +521,10 @@ int main() {
         let expected_tokens = vec![Token::DoubleRightAngleBracket];
         let tokens = lex(source_code_string);
         assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn ampersand_token_is_created() {
+        assert_eq!(lex("&"), vec![Token::Ampersand]);
     }
 }
