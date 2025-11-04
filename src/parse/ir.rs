@@ -69,6 +69,7 @@ fn parse_binary_operator(node: c::BinaryOperator) -> BinaryOperator {
         c::BinaryOperator::Multiply => BinaryOperator::Multiply,
         c::BinaryOperator::Divide => BinaryOperator::Divide,
         c::BinaryOperator::Modulo => BinaryOperator::Modulo,
+        _ => todo!(),
     }
 }
 

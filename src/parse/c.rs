@@ -16,6 +16,7 @@ pub enum BinaryOperator {
     Multiply,
     Divide,
     Modulo,
+    LeftBitshift,
 }
 
 #[derive(Debug, PartialEq)]
@@ -67,6 +68,7 @@ pub fn parse_binary_operator(tokens: &mut VecDeque<Token>) -> BinaryOperator {
         Token::Asterisk => BinaryOperator::Multiply,
         Token::ForwardSlash => BinaryOperator::Divide,
         Token::Percent => BinaryOperator::Modulo,
+        Token::DoubleLeftAngleBracket => BinaryOperator::LeftBitshift,
         _ => todo!(),
     }
 }
@@ -522,6 +524,15 @@ mod tests {
             right: Box::new(Expression::NumericConstant(right_operand)),
         };
         let ast_node = parse_expression(&mut tokens, 0);
+        assert_eq!(0, tokens.len());
+        assert_eq!(expected_ast_node, ast_node);
+    }
+
+    #[test]
+    fn parse_left_bitshift_operator() {
+        let mut tokens = VecDeque::from([Token::DoubleLeftAngleBracket]);
+        let expected_ast_node = BinaryOperator::LeftBitshift;
+        let ast_node = parse_binary_operator(&mut tokens);
         assert_eq!(0, tokens.len());
         assert_eq!(expected_ast_node, ast_node);
     }
